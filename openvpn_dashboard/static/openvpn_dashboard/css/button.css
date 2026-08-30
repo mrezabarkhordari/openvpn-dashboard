@@ -1,0 +1,81 @@
+/* Base Button Styles */
+.button-4 {
+    appearance: none;
+    background-color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    padding: 8px 16px;
+    position: relative;
+    transition: all var(--transition-fast);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: middle;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.button-4:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    text-decoration: none;
+    color: var(--text-inverse);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.button-4:visited {
+    color: var(--text-inverse);
+}
+
+.button-4:disabled {
+    background-color: var(--bg-active);
+    border-color: var(--border-default);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.button-4:active:not(:disabled) {
+    background-color: var(--primary-hover);
+    transform: translateY(1px);
+}
+
+.button-4:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--input-focus-ring);
+}
+
+.button-4:focus:not(:focus-visible) {
+    box-shadow: var(--shadow-sm);
+}
+
+.button-4:focus-visible {
+    box-shadow: 0 0 0 3px var(--input-focus-ring);
+}
+
+/* Responsive Button Styles */
+@media (max-width: 768px) {
+    .button-4 {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .button-4 {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+}

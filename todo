@@ -1,0 +1,72 @@
+
+
+set login page for admins of app : DONE
+
+location of saving profile should be local path no the volume : DONE
+
+show days like account creatin in account edit :DONE
+save edit in account edit not work: DONE
+
+show error log on pop for down config file not found : DONE
+
+disable account is not working an account creation for a user and without user redirecting : DONE
+
+button text color in light mode : DONE
+
+change color of user column in accoutn list : DONE 
+
+make account clickable in account list like user to view the accoutn info which is edit and rmove under line for this clickabel , by clicking on the row go to update account : DONE
+
+sort option : DONE
+
+updating account get back to account list , jsut get back to previous view : DONE
+
+check logic of deleteion for a user , all the account should be deactive/revoke then delete tehe user : DONE
+
+persist database : DONE
+
+declare a filed for server url in the accoutn list like at the top of page make it editable to use it for futre use  : DONE
+
+config template is not correct , should contain a url for rewrite for the clinet : DONE
+
+
+showing download and uplaod reversly :  DONE
+
+update usage decouple of user connectin , it count when its disconnect , so when a user not disconnect no data for usage : DONE
+
+
+put reset usage in action culon instead of totla usage : DONE
+
+
+add renew certificate , add icon too : CHECK
+
+disable user after expiration: CHECK
+
+
+switch positoin of down and uplaod column: DONE
+
+deactive not work in some places in account edit : DONE
+
+
+============================================================================
+
+
+add last 24 hours downlaod and uplaod 
+
+sort doesnt work correclty on usage 
+
+show total usage of a day 
+
+sho renew cert only in account edit page to prevent accident renew cert 
+
+default sort based on expiration date or ramainding day 
+
+revise responsivness to change the column 
+
+change color schema all green is som sort of not good 
+
+change how we show status of each client , is it connected and is it enable or not 
+
+shoe just remaining day and showing the date by hovering that value
+
+

@@ -1,0 +1,75 @@
+/* Delete Button - Red/Danger */
+.button-del {
+    appearance: none;
+    background-color: #dc2626;
+    border: 1px solid #dc2626;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    box-sizing: border-box;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    padding: 8px 16px;
+    position: relative;
+    transition: all var(--transition-fast);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    vertical-align: middle;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.button-del:hover {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+    text-decoration: none;
+    color: #ffffff;
+}
+
+.button-del:visited {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .button-del {
+    background-color: #ef4444;
+    border-color: #ef4444;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .button-del:hover {
+    background-color: #f87171;
+    border-color: #f87171;
+    color: #450a0a;
+}
+
+[data-theme="dark"] .button-del:visited {
+    color: #ffffff;
+}
+
+.button-del:disabled {
+    background-color: var(--bg-active);
+    border-color: var(--border-default);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.button-del:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.button-del:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4);
+}
+
+.button-del:focus:not(:focus-visible) {
+    box-shadow: var(--shadow-sm);
+}

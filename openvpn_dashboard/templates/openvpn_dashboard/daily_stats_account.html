@@ -1,0 +1,317 @@
+{% extends 'openvpn_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Daily Stats - {{ account.account_number }} - OpenVPN Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-wrapper {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 20px 0;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .date-filter {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .date-filter select {
+        padding: 8px 12px;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-sm);
+        background: var(--bg-base);
+        color: var(--text-primary);
+        font-size: 14px;
+    }
+
+    .content-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        overflow-x: auto;
+        margin-bottom: 20px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .account-info {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .account-info h3 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        color: var(--text-primary);
+    }
+
+    .account-info p {
+        margin: 6px 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .summary-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+    }
+
+    .summary-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .summary-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .stats-table th {
+        text-align: left;
+        padding: 10px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-default);
+        background: var(--bg-body);
+        white-space: nowrap;
+    }
+
+    .stats-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+    }
+
+    .stats-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .stats-table tr:hover td {
+        background: var(--bg-hover);
+    }
+
+    .usage-cell {
+        font-family: monospace;
+        font-size: 12px;
+        text-align: right;
+        white-space: nowrap;
+        color: var(--text-secondary);
+    }
+
+    .date-cell {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .page-wrapper { padding: 0 12px; }
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 0;
+        }
+        .header h1 { font-size: 20px; word-break: break-word; }
+        .header-right {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .date-filter { width: 100%; }
+        .date-filter select { flex: 1; min-width: 0; }
+        .summary-grid { grid-template-columns: 1fr 1fr; }
+        .stats-table { min-width: 800px; }
+    }
+
+    @media (max-width: 480px) {
+        .summary-grid { grid-template-columns: 1fr; }
+        .header-right .button-4 { flex: 1 1 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="header">
+        <h1>📊 Daily Statistics: {{ account.account_number }}</h1>
+        <div class="header-right">
+            <div class="date-filter">
+                <label for="days-filter">Period:</label>
+                <select id="days-filter" onchange="window.location.href='?days=' + this.value">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                    <option value="180" {% if days == 180 %}selected{% endif %}>Last 180 days</option>
+                </select>
+            </div>
+            <a href="{% url 'daily_stats_list' %}?days={{ days }}" class="button-4">← All Stats</a>
+            <a href="{% url 'account_list' %}" class="button-4">← Accounts</a>
+        </div>
+    </div>
+
+    <!-- Account Info -->
+    <div class="account-info">
+        <h3>Account Information</h3>
+        <p><strong>Account:</strong> {{ account.account_number }}</p>
+        <p><strong>User:</strong> {{ account.user.name }}</p>
+        <p><strong>Status:</strong> {{ account.get_status_display }}</p>
+        <p><strong>Date Range:</strong> {{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }}</p>
+    </div>
+
+    <!-- Summary -->
+    {% if totals.total_days > 0 %}
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-label">Total Days</div>
+            <div class="summary-value">{{ totals.total_days }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Total Download</div>
+            <div class="summary-value">{{ totals.total_bytes_sent_human }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Total Upload</div>
+            <div class="summary-value">{{ totals.total_bytes_received_human }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Total Usage</div>
+            <div class="summary-value">{{ totals.total_bytes_human }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Total Sessions</div>
+            <div class="summary-value">{{ totals.total_sessions }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Avg Daily Usage</div>
+            <div class="summary-value">{{ totals.avg_daily_bytes_human }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Daily Stats Table -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2>📋 Daily Statistics</h2>
+        </div>
+        {% if stats %}
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Download</th>
+                    <th>Upload</th>
+                    <th>Total</th>
+                    <th>Sessions</th>
+                    <th>Total Duration</th>
+                    <th>Avg Duration</th>
+                    <th>First Connection</th>
+                    <th>Last Connection</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in stats %}
+                <tr>
+                    <td class="date-cell">{{ stat.date|date:"M d, Y" }}</td>
+                    <td class="usage-cell">{{ stat.bytes_sent_human }}</td>
+                    <td class="usage-cell">{{ stat.bytes_received_human }}</td>
+                    <td class="usage-cell"><strong>{{ stat.total_bytes_human }}</strong></td>
+                    <td>{{ stat.session_count }}</td>
+                    <td>{{ stat.total_session_duration_human }}</td>
+                    <td>{{ stat.avg_session_duration_human }}</td>
+                    <td>
+                        {% if stat.first_connection_time %}
+                            {{ stat.first_connection_time|date:"H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if stat.last_connection_time %}
+                            {{ stat.last_connection_time|date:"H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No daily statistics available for this account in the selected period.</p>
+            <p style="margin-top: 10px; font-size: 12px;">Run <code>python manage.py aggregate_daily_stats</code> to generate statistics.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

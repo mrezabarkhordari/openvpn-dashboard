@@ -1,0 +1,28 @@
+# Secrets and local config
+.env
+.env.local
+.env.*.local
+
+# Runtime data and PKI (never publish)
+stack-data/
+data/
+ovpn-configs/
+*.ovpn
+*.img
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# OS / editor (local only)
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+.cursor/
+ui.img

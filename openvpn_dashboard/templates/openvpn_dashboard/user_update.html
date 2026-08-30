@@ -1,0 +1,1556 @@
+{% extends 'openvpn_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ user.name }} - User Info - OpenVPN Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-wrapper {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    /* Card Layout */
+    .content-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-header .icon {
+        font-size: 22px;
+    }
+
+    .card-header .badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    .card-body.compact {
+        padding: 16px 20px;
+    }
+
+    /* Compact User Info Row */
+    .user-info-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .user-avatar-small {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: 0 3px 8px rgba(0, 102, 204, 0.25);
+    }
+
+    /* Compact Form Grid - 2 column layout */
+    .form-grid-compact {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 16px;
+        flex: 1;
+        align-items: stretch;
+    }
+
+    .fields-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* Make info field stretch to match fields-stack height */
+    .form-grid-compact > .form-group.info-field {
+        align-self: stretch;
+    }
+
+    /* Form Styling */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .form-group {
+        position: relative;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+    }
+
+    .form-group .input-wrapper {
+        position: relative;
+    }
+
+    .form-group .input-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 14px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .form-group .input-icon.textarea-icon {
+        top: 10px;
+        left: 12px;
+        transform: none;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 14px;
+        padding-left: 38px;
+        border: 2px solid var(--border-default);
+        border-radius: var(--radius-md);
+        background: var(--bg-body);
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .form-group input:hover,
+    .form-group select:hover,
+    .form-group textarea:hover {
+        border-color: var(--border-strong);
+        background: var(--bg-surface);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: var(--bg-surface);
+        box-shadow: 0 0 0 3px var(--input-focus-ring);
+    }
+
+    .form-group textarea {
+        min-height: 100px;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.5;
+    }
+
+    .form-group.info-field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.info-field .input-wrapper {
+        display: flex;
+    }
+
+    .form-group.info-field textarea {
+        height: 92px;
+        min-height: 112px;
+        resize: none;
+        padding-top: 10px;
+    }
+
+    .form-group .hint {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        background: var(--bg-body);
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .form-actions.compact {
+        padding: 10px 16px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 18px;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        text-decoration: none;
+    }
+
+    .btn-sm {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
+        color: var(--text-inverse);
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border: 2px solid var(--border-default);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-strong);
+        text-decoration: none;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        color: var(--text-inverse);
+        text-decoration: none;
+    }
+
+    /* User Avatar Preview */
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        color: white;
+        margin: 0 auto 20px;
+        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    }
+
+    /* Accounts Table */
+    .accounts-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .accounts-table th {
+        text-align: left;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-default);
+        background: var(--bg-body);
+        white-space: nowrap;
+    }
+
+    .accounts-table td {
+        padding: 16px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+    }
+
+    /* Actions column - don't wrap */
+    .accounts-table td.actions-cell {
+        white-space: nowrap;
+    }
+
+    .accounts-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .accounts-table tr:hover td {
+        background: var(--bg-hover);
+    }
+
+    .remaining-days {
+        font-variant-numeric: tabular-nums;
+        color: var(--text-primary);
+        white-space: nowrap;
+    }
+
+    .remaining-days.is-expired,
+    .expired-text {
+        color: var(--danger);
+        font-weight: 600;
+        background: transparent;
+    }
+
+    .connection-text {
+        font-size: 10px;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+
+    .connection-text.on {
+        color: var(--success);
+    }
+
+    /* Account Number Cell */
+    .account-number {
+        font-weight: 600;
+        font-family: monospace;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .account-number a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .account-number a:hover {
+        color: var(--primary);
+        text-decoration: underline;
+    }
+
+    .connection-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--text-muted);
+    }
+
+    .connection-indicator.online {
+        background: var(--success);
+        box-shadow: 0 0 6px var(--success);
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background: var(--primary-light);
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+
+    .status-badge.disabled {
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        border: 1px solid var(--border-default);
+    }
+
+    .status-badge.expired {
+        background: transparent;
+        color: var(--danger);
+        border: 1px solid transparent;
+        font-weight: 600;
+    }
+
+    /* Clickable Status Toggle in Table */
+    .status-toggle-inline {
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+    }
+
+    .status-toggle-inline:hover {
+        transform: scale(1.05);
+        transition: transform var(--transition-fast);
+    }
+
+    .status-toggle-inline:active {
+        transform: scale(0.95);
+    }
+
+    .status-toggle-inline.disabled-click {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .status-toggle-inline.disabled-click:hover {
+        transform: none;
+    }
+
+    .status-toggle-inline .toggle-hint {
+        position: absolute;
+        bottom: -24px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-elevated);
+        color: var(--text-secondary);
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        font-size: 10px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        box-shadow: var(--shadow-sm);
+        z-index: 10;
+    }
+
+    .status-toggle-inline:hover .toggle-hint {
+        opacity: 1;
+    }
+
+    .status-toggle-inline.disabled-click .toggle-hint {
+        display: none;
+    }
+
+    .status-toggle-inline.loading {
+        pointer-events: none;
+    }
+
+    .status-toggle-inline.loading .status-badge {
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Usage Cell */
+    .usage-cell {
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 4px;
+        flex-wrap: nowrap;
+        white-space: nowrap;
+        align-items: center;
+    }
+
+    .action-btn {
+        padding: 4px 8px;
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        position: relative;
+        gap: 4px;
+    }
+
+    .action-btn .btn-text {
+        display: inline;
+    }
+
+    /* Tooltip on hover */
+    .action-btn::after {
+        content: attr(title);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 4px;
+        z-index: 10;
+    }
+
+    .action-btn:hover::after {
+        opacity: 1;
+    }
+
+    .action-btn-edit {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .action-btn-edit:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+
+    .action-btn-download {
+        background: var(--info-bg);
+        color: var(--info);
+    }
+
+    .action-btn-download:hover {
+        background: var(--info);
+        color: white;
+        text-decoration: none;
+    }
+
+    .action-btn-reset {
+        background: var(--warning-bg, #fef3c7);
+        color: var(--warning, #d97706);
+    }
+
+    .action-btn-reset:hover {
+        background: var(--warning, #d97706);
+        color: white;
+        text-decoration: none;
+    }
+
+    .action-btn-delete {
+        background: var(--danger-bg, #fee2e2);
+        color: var(--danger, #dc2626);
+    }
+
+    .action-btn-delete:hover {
+        background: var(--danger, #dc2626);
+        color: white;
+        text-decoration: none;
+    }
+
+    .action-btn-sessions {
+        background: var(--primary-light, #e0e7ff);
+        color: var(--primary, #4338ca);
+    }
+
+    .action-btn-sessions:hover {
+        background: var(--primary, #4338ca);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        margin: 0 0 8px;
+        color: var(--text-secondary);
+    }
+
+    .empty-state p {
+        margin: 0 0 20px;
+    }
+
+    /* Responsive - Tablet */
+    @media (max-width: 992px) {
+        .page-wrapper {
+            max-width: 100%;
+            padding: 0 16px;
+        }
+    }
+
+    /* Responsive - Mobile */
+    @media (max-width: 768px) {
+        .page-wrapper {
+            padding: 0;
+        }
+
+        /* Header Mobile */
+        .header {
+            padding: 16px;
+            margin-bottom: 0;
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .header h1 {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .header .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .header .buttons .button-4,
+        .header .buttons button {
+            font-size: 13px;
+            padding: 10px 14px;
+            justify-content: center;
+            text-align: center;
+        }
+
+
+        /* Cards Mobile */
+        .content-card {
+            border-radius: 0;
+            margin-bottom: 8px;
+            border-left: none;
+            border-right: none;
+        }
+
+        .card-header {
+            padding: 16px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-header h2 {
+            font-size: 16px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-header .badge {
+            padding: 3px 10px;
+            font-size: 11px;
+        }
+
+        .card-header .btn {
+            flex-shrink: 0;
+            padding: 8px 14px;
+            font-size: 12px;
+        }
+
+        .card-body {
+            padding: 16px;
+        }
+
+        .card-body.compact {
+            padding: 16px;
+        }
+
+        /* User Info Form Mobile */
+        .user-info-row {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .user-avatar-small {
+            width: 64px;
+            height: 64px;
+            font-size: 26px;
+            margin: 0 auto;
+        }
+
+        .form-grid-compact {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .fields-stack {
+            gap: 12px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            font-size: 16px; /* Prevents iOS zoom */
+            padding: 12px 14px 12px 40px;
+        }
+
+        .form-group .input-icon {
+            font-size: 16px;
+            left: 12px;
+        }
+
+        .form-group.info-field textarea {
+            min-height: 100px;
+        }
+
+        /* Form Actions Mobile */
+        .form-actions {
+            flex-direction: row;
+            padding: 12px 16px;
+            gap: 10px;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+            justify-content: center;
+            padding: 12px 16px;
+        }
+
+        /* ===== Mobile Account Cards ===== */
+        .accounts-table {
+            display: block;
+            border: none;
+            box-shadow: none;
+            background: transparent;
+        }
+
+        .accounts-table thead {
+            display: none;
+        }
+
+        .accounts-table tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .accounts-table tr.account-row {
+            display: flex;
+            flex-wrap: wrap;
+            position: relative;
+            padding: 16px;
+            margin: 0;
+            border-radius: 0;
+            border: none;
+            border-bottom: 1px solid var(--border-default);
+            background: var(--bg-surface);
+        }
+
+        .accounts-table tr.account-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Remove td borders in mobile */
+        .accounts-table td {
+            display: block;
+            border: none !important;
+            padding: 0;
+            text-align: left;
+            background: transparent !important;
+        }
+
+        /* Account Header - Account Number */
+        .accounts-table td[data-label="Account"] {
+            width: calc(100% - 90px);
+            padding-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .accounts-table td[data-label="Account"] .account-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .accounts-table td[data-label="Account"] .connection-indicator {
+            width: 10px;
+            height: 10px;
+        }
+
+        /* Enabled badge - Top Right */
+        .accounts-table td[data-label="Enabled"] {
+            width: 90px;
+            text-align: right;
+            margin-bottom: 10px;
+        }
+
+        .status-toggle-inline .toggle-hint {
+            display: none;
+        }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+
+        /* Meta info row */
+        .accounts-table td.mobile-meta {
+            display: inline-block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding-right: 14px;
+            margin-bottom: 4px;
+        }
+
+        .accounts-table td.mobile-meta .expired-text,
+        .accounts-table td.mobile-meta.remaining-days.is-expired {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        /* Usage Cell Mobile */
+        .usage-cell {
+            font-size: 13px !important;
+            line-height: 1.4;
+        }
+
+        .usage-cell br {
+            display: none;
+        }
+
+        /* Actions Row */
+        .accounts-table td.actions-cell {
+            width: 100%;
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 1px solid var(--border-subtle) !important;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 8px;
+            overflow-x: auto;
+        }
+
+        .action-btn {
+            flex: 0 0 auto;
+            padding: 11px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            justify-content: center;
+            border-radius: var(--radius-md);
+        }
+
+        .accounts-table tr.account-row {
+            background: var(--bg-surface);
+        }
+
+        /* Empty State Mobile */
+        .empty-state {
+            padding: 40px 24px;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        .empty-state .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 12px 20px;
+        }
+
+        /* Modal Mobile */
+        .modal-content {
+            width: calc(100% - 32px);
+            max-width: 400px;
+            padding: 20px;
+            margin: 16px;
+        }
+
+        .modal-header {
+            gap: 10px;
+        }
+
+        .modal-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            gap: 10px;
+        }
+
+        .modal-btn {
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+
+        /* Toast Mobile */
+        .toast-container {
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+        }
+
+        .toast {
+            font-size: 14px;
+            padding: 14px 18px;
+            border-radius: var(--radius-lg);
+        }
+    }
+
+    /* Extra small screens */
+    @media (max-width: 400px) {
+        .header h1 {
+            font-size: 20px;
+        }
+
+        .header .buttons {
+            grid-template-columns: 1fr;
+        }
+
+
+        .card-header h2 {
+            font-size: 15px;
+        }
+
+        .card-header h2 .icon {
+            font-size: 18px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            padding: 10px 12px;
+            font-size: 12px;
+        }
+    }
+
+    /* Toast Notification */
+    .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 1001;
+    }
+
+    .toast {
+        padding: 14px 20px;
+        border-radius: var(--radius-lg);
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: var(--shadow-lg);
+        animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    @keyframes toastIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes toastOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+
+    .toast-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .toast-error {
+        background: var(--danger);
+        color: white;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-content {
+        background: var(--bg-surface, #ffffff);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg, 12px);
+        padding: 24px;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.25s ease;
+    }
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    .modal-icon.danger {
+        background: rgba(220, 53, 69, 0.15);
+        color: #dc3545;
+    }
+    .modal-icon.warning {
+        background: rgba(180, 83, 9, 0.15);
+        color: #b45309;
+    }
+    .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+    [data-theme="dark"] .modal-title {
+        color: #f3f4f6;
+    }
+    .modal-body {
+        color: #4b5563;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+    [data-theme="dark"] .modal-body {
+        color: #9ca3af;
+    }
+    .modal-footer {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+    .modal-btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+    }
+    .modal-btn-cancel {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border: 1px solid var(--border-default);
+    }
+    .modal-btn-cancel:hover {
+        background: var(--bg-active);
+        border-color: var(--border-strong);
+    }
+    .modal-btn-danger {
+        background: var(--danger);
+        color: var(--text-inverse);
+    }
+    .modal-btn-danger:hover {
+        background: var(--danger);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+    .modal-btn-success {
+        background: var(--success);
+        color: var(--text-inverse);
+    }
+    .modal-btn-success:hover {
+        background: var(--success);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+    .modal-btn-warning {
+        background: var(--warning);
+        color: var(--warning-text);
+    }
+    .modal-btn-warning:hover {
+        background: var(--warning);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
+    }
+    .modal-icon.success {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Toast notification
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `${type === 'success' ? '✓' : '✕'} ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Modal system
+    let modalCallback = null;
+    let modalIsOpen = false;
+    
+    function showModal(options) {
+        if (modalIsOpen) return;
+        
+        const modal = document.getElementById('confirm-modal');
+        const icon = modal.querySelector('.modal-icon');
+        const title = modal.querySelector('.modal-title');
+        const body = modal.querySelector('.modal-body');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        
+        icon.className = `modal-icon ${options.type || 'danger'}`;
+        icon.textContent = options.icon || (options.type === 'warning' ? '⚠' : '🗑');
+        title.textContent = options.title;
+        body.innerHTML = options.message;
+        confirmBtn.textContent = options.confirmText || 'Confirm';
+        confirmBtn.className = `modal-btn modal-btn-confirm modal-btn-${options.type || 'danger'}`;
+        
+        // Hide cancel button if hideCancel is true (for info-only modals)
+        if (options.hideCancel) {
+            cancelBtn.style.display = 'none';
+        } else {
+            cancelBtn.style.display = '';
+        }
+        
+        modalCallback = options.onConfirm;
+        modalIsOpen = true;
+        modal.classList.add('active');
+    }
+    
+    function closeModal() {
+        const modal = document.getElementById('confirm-modal');
+        modal.classList.remove('active');
+        modalCallback = null;
+        modalIsOpen = false;
+    }
+    
+    function confirmModal() {
+        const callback = modalCallback;
+        closeModal();
+        if (callback) {
+            callback();
+        }
+    }
+
+    function downloadConfig(accountNumber) {
+        // First check if the file exists via AJAX
+        $.ajax({
+            url: "/download/" + accountNumber + "/",
+            method: "GET",
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(data, textStatus, xhr) {
+                // File exists, trigger actual download
+                window.location.href = "/download/" + accountNumber + "/";
+            },
+            error: function(xhr) {
+                var errorMsg = 'Configuration file not found for account "' + accountNumber + '". The .ovpn file may not have been generated yet.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                showModal({
+                    type: 'danger',
+                    icon: '❌',
+                    title: 'Download Failed',
+                    message: errorMsg,
+                    confirmText: 'OK',
+                    hideCancel: true,
+                    onConfirm: function() {}
+                });
+            }
+        });
+    }
+
+    // Reset usage for single account - with confirmation
+    function resetUsage(accountId, accountName) {
+        showModal({
+            type: 'warning',
+            icon: '↺',
+            title: 'Reset Usage',
+            message: `Are you sure you want to reset usage statistics for account <strong>${accountName}</strong>?<br><br>This will set upload, download, and total usage to zero.`,
+            confirmText: 'Reset Usage',
+            onConfirm: function() {
+                $.ajax({
+                    url: "/account/" + accountId + "/reset-usage/",
+                    method: "POST",
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+                    success: function(data) {
+                        if (data.success) {
+                            // Update the usage cell in the table
+                            var row = $('button.action-btn-reset[data-account-id="' + accountId + '"]').closest('tr');
+                            row.find('.usage-cell').html('⬇ 0 B · ⬆ 0 B');
+                            showToast('Usage reset for ' + accountName);
+                        } else {
+                            showToast(data.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast("Failed to reset usage", 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // Delete account with confirmation
+    function confirmDelete(accountName, accountId) {
+        showModal({
+            type: 'danger',
+            icon: '🗑',
+            title: 'Delete Account',
+            message: `Are you sure you want to permanently delete account <strong>${accountName}</strong>?<br><br>This action cannot be undone.`,
+            confirmText: 'Delete',
+            onConfirm: function() {
+                document.getElementById("delete-form-" + accountId).submit();
+            }
+        });
+    }
+
+    function toggleAccountStatus(element, accountNumber, currentStatus) {
+        // Don't allow toggling expired accounts
+        if (currentStatus === 'expired') {
+            showToast('Expired account - edit to extend expiration date', 'error');
+            return;
+        }
+
+        var newStatus = currentStatus === 'active' ? 'deactivate' : 'activate';
+        var $element = $(element);
+        var $row = $element.closest('tr');
+        var $badge = $element.find('.status-badge');
+        
+        // Add loading state
+        $element.addClass('loading');
+
+        $.ajax({
+            url: "/accounts/" + accountNumber + "/" + newStatus + "/update_status/",
+            method: "POST",
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+            success: function(data) {
+                $element.removeClass('loading');
+                if (data.success) {
+                    // Update badge appearance
+                    var updatedStatus = data.updated_status;
+                    $badge.removeClass('active disabled expired');
+                    $badge.addClass(updatedStatus);
+                    
+                    if (updatedStatus === 'active') {
+                        $badge.text('Active');
+                        $element.attr('onclick', "toggleAccountStatus(this, '" + accountNumber + "', 'active')");
+                    } else {
+                        $badge.text('Disabled');
+                        $element.attr('onclick', "toggleAccountStatus(this, '" + accountNumber + "', 'disabled')");
+                    }
+
+                    var $hint = $element.find('.toggle-hint');
+                    $hint.text(updatedStatus === 'active' ? 'Click to deactivate' : 'Click to activate');
+
+                    $row.removeClass('active disable expired');
+
+                    showToast(data.message);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                $element.removeClass('loading');
+                var errorMsg = 'Failed to update account status';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                showToast(errorMsg, 'error');
+            }
+        });
+    }
+
+    $(function() {
+        // Update avatar initial when name changes
+        $('#id_name').on('input', function() {
+            var name = $(this).val();
+            var initial = name.charAt(0).toUpperCase() || '?';
+            $('.user-avatar').text(initial);
+        });
+
+        // Modal button handlers
+        $('#modal-cancel-btn').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal();
+        });
+        
+        $('#modal-confirm-btn').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            confirmModal();
+        });
+        
+        // Close modal on overlay click
+        $('#confirm-modal').on('click', function(e) {
+            if (e.target === this) {
+                e.preventDefault();
+                closeModal();
+            }
+        });
+        
+        // Close modal on Escape key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && modalIsOpen) {
+                closeModal();
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="header">
+        <h1>User Info</h1>
+        <div class="buttons">
+            <a href="{% url 'user_list' %}" class="button-4">← Back to Users</a>
+            <a href="{% url 'account_list' %}" class="button-4">Account List</a>
+        </div>
+    </div>
+
+    <!-- User Information Card -->
+    <form method="post">
+        {% csrf_token %}
+        <div class="content-card">
+            <div class="card-header">
+                <h2><span class="icon">👤</span> User Information</h2>
+            </div>
+            <div class="card-body compact">
+                <div class="user-info-row">
+                    <!-- User Avatar -->
+                    <div class="user-avatar-small">{{ user.name|slice:":1"|upper }}</div>
+
+                    <div class="form-grid-compact">
+                        <!-- Left column: Name and Phone stacked -->
+                        <div class="fields-stack">
+                            <div class="form-group">
+                                <label for="id_name">Full Name</label>
+                                <div class="input-wrapper">
+                                    <span class="input-icon">👤</span>
+                                    {{ form.name }}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="id_phone">Phone Number</label>
+                                <div class="input-wrapper">
+                                    <span class="input-icon">📱</span>
+                                    {{ form.phone }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right column: Notes (full height) -->
+                        <div class="form-group info-field">
+                            <label for="id_info">Notes</label>
+                            <div class="input-wrapper">
+                                <span class="input-icon textarea-icon">📝</span>
+                                {{ form.info }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions compact">
+                <a href="{% url 'user_list' %}" class="btn btn-secondary btn-sm">Cancel</a>
+                <button type="submit" class="btn btn-primary btn-sm">💾 Save</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- User's Accounts Card -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2><span class="icon">🔐</span> VPN Accounts <span class="badge">{{ accounts|length }}</span></h2>
+            <a href="{% url 'account_create' %}?user_id={{ user.id }}&next={% url 'user_update' user.id %}" class="btn btn-success">+ New Account</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if accounts %}
+            <table class="accounts-table">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Days</th>
+                        <th>Enabled</th>
+                        <th>Download/Upload</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in accounts %}
+                    <tr class="account-row">
+                        <td data-label="Account">
+                            <div class="account-number">
+                                <span class="connection-indicator {% if account.is_connected %}online{% endif %}" title="{% if account.is_connected %}Connected{% else %}Offline{% endif %}"></span>
+                                <span class="connection-text {% if account.is_connected %}on{% endif %}">{% if account.is_connected %}On{% else %}Off{% endif %}</span>
+                                <a href="{% url 'account_update' account.id %}?next={% url 'user_update' user.id %}">{{ account.account_number }}</a>
+                            </div>
+                        </td>
+                        <td data-label="Days" class="mobile-meta remaining-days{% if account.days_until_expiration <= 0 %} is-expired{% endif %}" title="{{ account.expiration_date }}">
+                            {% if account.days_until_expiration <= 0 %}Expired{% else %}{{ account.days_until_expiration }}d{% endif %}
+                        </td>
+                        <td data-label="Enabled">
+                            <div class="status-toggle-inline {% if account.days_until_expiration <= 0 or account.status == 'expired' %}disabled-click{% endif %}" 
+                                 onclick="toggleAccountStatus(this, '{{ account.account_number }}', '{{ account.status }}')">
+                                <span class="status-badge {% if account.days_until_expiration <= 0 or account.status == 'expired' %}expired{% elif account.status == 'active' %}active{% else %}disabled{% endif %}">
+                                    {% if account.days_until_expiration <= 0 or account.status == 'expired' %}Expired{% elif account.status == 'active' %}Active{% else %}Disabled{% endif %}
+                                </span>
+                                <span class="toggle-hint">
+                                    {% if account.days_until_expiration <= 0 or account.status == 'expired' %}Expired - edit to extend{% elif account.status == 'active' %}Click to deactivate{% else %}Click to activate{% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td data-label="Usage" class="usage-cell mobile-meta">
+                            ⬇ {{ account.total_bytes_sent_human }} · ⬆ {{ account.total_bytes_received_human }}
+                        </td>
+                        <td data-label="" class="actions-cell">
+                            <div class="action-buttons">
+                                <a href="{% url 'account_update' account.id %}?next={% url 'user_update' user.id %}" class="action-btn action-btn-edit" title="Edit">✏️ Edit</a>
+                                <button type="button" onclick="downloadConfig('{{ account.account_number }}')" class="action-btn action-btn-download" title="Download Config">📥 Download</button>
+                                <button type="button" class="action-btn action-btn-reset" data-account-id="{{ account.id }}" onclick="resetUsage({{ account.id }}, '{{ account.account_number }}')" title="Reset Usage">↺ Reset</button>
+                                <button type="button" onclick="confirmDelete('{{ account.account_number }}', '{{ account.id }}')" class="action-btn action-btn-delete" title="Delete">🗑️ Delete</button>
+                                <a href="{% url 'account_sessions' account.id %}" class="action-btn action-btn-sessions" title="Sessions">Sessions</a>
+                            </div>
+                            <form id="delete-form-{{ account.id }}" method="post" action="{% url 'account_delete' account.id %}" style="display: none;">
+                                {% csrf_token %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">🔐</div>
+                <h3>No Accounts Yet</h3>
+                <p>This user doesn't have any VPN accounts.</p>
+                <a href="{% url 'account_create' %}?user_id={{ user.id }}&next={% url 'user_update' user.id %}" class="btn btn-success">+ Create First Account</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon danger">🗑</div>
+            <h3 class="modal-title">Confirm Action</h3>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to proceed?
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="modal-btn modal-btn-cancel" id="modal-cancel-btn">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-confirm modal-btn-danger" id="modal-confirm-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

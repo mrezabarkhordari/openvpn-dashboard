@@ -1,0 +1,1429 @@
+{% extends 'openvpn_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Update Account - OpenVPN Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+<style>
+    .page-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    /* Card Layout */
+    .content-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-header .icon {
+        font-size: 22px;
+    }
+
+    .card-body {
+        padding: 24px;
+    }
+
+    /* Tab System */
+    .tabs-container {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+
+    .tabs-nav {
+        display: flex;
+        background: var(--bg-elevated);
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+
+    .tabs-nav li {
+        flex: 1;
+    }
+
+    .tabs-nav button {
+        width: 100%;
+        padding: 16px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .tabs-nav button:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .tabs-nav button.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background: var(--bg-surface);
+    }
+
+    .tabs-nav button .icon {
+        font-size: 18px;
+    }
+
+    .tab-content {
+        display: none;
+        padding: 24px;
+        position: relative;
+        min-height: 100%;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* Usage Statistics Grid */
+    .usage-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .usage-stat {
+        background: var(--bg-body);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .usage-stat::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+
+    .usage-stat.upload::before {
+        background: linear-gradient(90deg, var(--success), #4ade80);
+    }
+
+    .usage-stat.download::before {
+        background: linear-gradient(90deg, var(--info), #22d3ee);
+    }
+
+    .usage-stat.total::before {
+        background: linear-gradient(90deg, var(--warning), #facc15);
+    }
+
+    .usage-stat .label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .usage-stat .value {
+        font-size: 28px;
+        font-weight: 700;
+        font-family: 'SF Mono', 'Consolas', monospace;
+    }
+
+    .usage-stat.upload .value { color: var(--success); }
+    .usage-stat.download .value { color: var(--info); }
+    .usage-stat.total .value { color: var(--warning); }
+
+    .usage-stat .icon-bg {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        font-size: 48px;
+        opacity: 0.1;
+    }
+
+    .usage-meta {
+        display: flex;
+        gap: 24px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-subtle);
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .usage-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Form Styling */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .form-group {
+        position: relative;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+    }
+
+    .form-group .input-wrapper {
+        position: relative;
+    }
+
+    .form-group .input-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 16px;
+        pointer-events: none;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 14px 16px;
+        padding-left: 44px;
+        border: 2px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        background: var(--bg-body);
+        color: var(--text-primary);
+        font-size: 15px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .form-group input:hover,
+    .form-group select:hover,
+    .form-group textarea:hover {
+        border-color: var(--border-strong);
+        background: var(--bg-surface);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: var(--bg-surface);
+        box-shadow: 0 0 0 4px var(--input-focus-ring);
+    }
+
+    .form-group input:disabled {
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        cursor: not-allowed;
+    }
+
+    /* Account Number Display */
+    .account-number-display {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        padding-left: 44px;
+        border: 2px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        background: var(--bg-body);
+        min-height: 50px;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .account-number-display .account-number-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--primary);
+        letter-spacing: 0.5px;
+        font-family: 'SF Mono', 'Consolas', monospace;
+    }
+
+    .account-number-display .readonly-badge {
+        margin-left: auto;
+        padding: 4px 10px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-secondary);
+    }
+
+    .form-group select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        padding-right: 40px;
+    }
+
+    .form-group textarea {
+        min-height: 100px;
+        resize: vertical;
+        padding-left: 16px;
+    }
+
+    .form-group .hint {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+    }
+
+    /* Status Badge in Header */
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .status-indicator.active {
+        background: var(--success-bg);
+        color: var(--success-text);
+    }
+
+    .status-indicator.disabled {
+        background: var(--warning-bg);
+        color: var(--warning-text);
+    }
+
+    .status-indicator.expired {
+        background: var(--danger-bg);
+        color: var(--danger-text);
+    }
+
+    /* Status Toggle Switch */
+    .status-toggle-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        background: var(--bg-body);
+        border: 2px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        transition: all 0.3s ease;
+    }
+
+    .status-toggle-wrapper.is-active {
+        border-color: var(--success);
+        background: var(--success-bg);
+    }
+
+    .status-toggle-wrapper.is-disabled {
+        border-color: var(--warning);
+        background: var(--warning-bg);
+    }
+
+    .status-toggle-wrapper.is-expired {
+        border-color: var(--danger);
+        background: var(--danger-bg);
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 56px;
+        height: 30px;
+        flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--border-strong);
+        border-radius: 30px;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-slider::before {
+        position: absolute;
+        content: "";
+        height: 24px;
+        width: 24px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background: var(--success);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(26px);
+    }
+
+    .toggle-switch input:focus + .toggle-slider {
+        box-shadow: 0 0 0 3px var(--input-focus-ring);
+    }
+
+    .status-info {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .status-info .status-label {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-info .status-label .status-badge {
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-toggle-wrapper.is-active .status-badge {
+        background: var(--success);
+        color: white;
+    }
+
+    .status-toggle-wrapper.is-disabled .status-badge {
+        background: #b45309;
+        color: #fff;
+    }
+
+    .status-toggle-wrapper.is-expired .status-badge {
+        background: var(--danger);
+        color: white;
+    }
+
+    .status-info .status-desc {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 4px;
+    }
+
+    .status-toggle-wrapper.is-active .status-desc {
+        color: var(--success-text);
+    }
+
+    .status-toggle-wrapper.is-disabled .status-desc {
+        color: #92400e;
+    }
+
+    [data-theme="dark"] .status-toggle-wrapper.is-disabled .status-desc {
+        color: #fbbf24;
+    }
+
+    .status-toggle-wrapper.is-expired .status-desc {
+        color: var(--danger-text);
+    }
+
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        margin-top: 32px;
+        margin-left: -24px;
+        margin-right: -24px;
+        margin-bottom: -24px;
+        border-top: 1px solid var(--border-subtle);
+        background: var(--bg-body);
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+
+    .form-actions .btn-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .form-actions .btn-group form {
+        display: inline-flex;
+        margin: 0;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border-radius: var(--radius-lg);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
+    }
+
+    .btn-secondary {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+        border: 2px solid var(--border-default);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-hover);
+        border-color: var(--border-strong);
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger) 0%, #c82333 100%);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    }
+
+    /* Toast Notification */
+    .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 1001;
+    }
+
+    .toast {
+        padding: 14px 20px;
+        border-radius: var(--radius-lg);
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: var(--shadow-lg);
+        animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    @keyframes toastIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes toastOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+
+    .toast-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .toast-error {
+        background: var(--danger);
+        color: white;
+    }
+
+    /* Custom Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.active {
+        display: flex;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-content {
+        background: var(--bg-surface, #ffffff);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg, 12px);
+        padding: 24px;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.25s ease;
+    }
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+    .modal-icon.danger {
+        background: rgba(220, 53, 69, 0.15);
+        color: #dc3545;
+    }
+    .modal-icon.warning {
+        background: rgba(180, 83, 9, 0.15);
+        color: #b45309;
+    }
+    .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+    }
+    [data-theme="dark"] .modal-title {
+        color: #f3f4f6;
+    }
+    .modal-body {
+        color: #4b5563;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+    [data-theme="dark"] .modal-body {
+        color: #9ca3af;
+    }
+    .modal-body strong {
+        color: #1f2937;
+    }
+    [data-theme="dark"] .modal-body strong {
+        color: #f3f4f6;
+    }
+    .modal-footer {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+    .modal-btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+    }
+    .modal-btn-cancel {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border: 1px solid var(--border-default);
+    }
+    .modal-btn-cancel:hover {
+        background: var(--bg-active);
+        border-color: var(--border-strong);
+    }
+    .modal-btn-danger {
+        background: var(--danger);
+        color: var(--text-inverse);
+    }
+    .modal-btn-danger:hover {
+        background: var(--danger);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+    .modal-btn-warning {
+        background: var(--warning);
+        color: var(--warning-text);
+    }
+    .modal-btn-warning:hover {
+        background: var(--warning);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
+    }
+
+    /* Quick Duration Buttons */
+    .duration-presets {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .duration-btn {
+        padding: 6px 12px;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        background: var(--bg-body);
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .duration-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-light);
+        transform: translateY(-1px);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-wrapper { padding: 0 12px; }
+
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .card-header {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .usage-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .status-toggle-wrapper {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-actions .btn-group {
+            width: 100%;
+        }
+
+        .form-actions .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .duration-presets {
+            flex-wrap: wrap;
+        }
+    }
+
+    /* jQuery UI Datepicker Override */
+    .ui-datepicker {
+        background: var(--bg-surface) !important;
+        border: 1px solid var(--border-default) !important;
+        border-radius: var(--radius-lg) !important;
+        box-shadow: var(--shadow-lg) !important;
+        padding: 12px !important;
+    }
+
+    .ui-datepicker-header {
+        background: transparent !important;
+        border: none !important;
+        padding: 8px 0 16px !important;
+    }
+
+    .ui-datepicker-title {
+        color: var(--text-primary) !important;
+        font-weight: 600 !important;
+    }
+
+    .ui-datepicker th {
+        color: var(--text-muted) !important;
+        font-weight: 500 !important;
+        padding: 8px !important;
+    }
+
+    .ui-datepicker td {
+        padding: 2px !important;
+    }
+
+    .ui-datepicker td a,
+    .ui-datepicker td span {
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-primary) !important;
+        padding: 8px !important;
+        border-radius: var(--radius-md) !important;
+        text-align: center !important;
+    }
+
+    .ui-datepicker td a:hover {
+        background: var(--bg-hover) !important;
+        color: var(--text-primary) !important;
+    }
+
+    .ui-datepicker .ui-state-active {
+        background: var(--primary) !important;
+        color: white !important;
+    }
+
+    .ui-datepicker .ui-datepicker-prev,
+    .ui-datepicker .ui-datepicker-next {
+        cursor: pointer !important;
+        top: 10px !important;
+    }
+
+    .ui-datepicker .ui-datepicker-prev span,
+    .ui-datepicker .ui-datepicker-next span {
+        display: none !important;
+    }
+
+    .ui-datepicker .ui-datepicker-prev::after {
+        content: '←';
+        color: var(--text-primary);
+        font-size: 18px;
+    }
+
+    .ui-datepicker .ui-datepicker-next::after {
+        content: '→';
+        color: var(--text-primary);
+        font-size: 18px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script>
+    // Toast notification
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `${type === 'success' ? '✓' : '✕'} ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Modal system
+    let modalCallback = null;
+    let modalIsOpen = false;
+    
+    function showModal(options) {
+        if (modalIsOpen) return; // Prevent multiple modals
+        
+        const modal = document.getElementById('confirm-modal');
+        const icon = modal.querySelector('.modal-icon');
+        const title = modal.querySelector('.modal-title');
+        const body = modal.querySelector('.modal-body');
+        const confirmBtn = document.getElementById('modal-confirm-btn');
+        const cancelBtn = document.getElementById('modal-cancel-btn');
+        
+        icon.className = `modal-icon ${options.type || 'danger'}`;
+        icon.textContent = options.icon || (options.type === 'warning' ? '⚠' : '🗑');
+        title.textContent = options.title;
+        body.innerHTML = options.message;
+        confirmBtn.textContent = options.confirmText || 'Confirm';
+        confirmBtn.className = `modal-btn modal-btn-confirm modal-btn-${options.type || 'danger'}`;
+        
+        // Hide cancel button if hideCancel is true (for info-only modals)
+        if (options.hideCancel) {
+            cancelBtn.style.display = 'none';
+        } else {
+            cancelBtn.style.display = '';
+        }
+        
+        modalCallback = options.onConfirm;
+        modalIsOpen = true;
+        modal.classList.add('active');
+    }
+    
+    function closeModal() {
+        const modal = document.getElementById('confirm-modal');
+        modal.classList.remove('active');
+        modalCallback = null;
+        modalIsOpen = false;
+    }
+    
+    function confirmModal() {
+        const callback = modalCallback;
+        closeModal();
+        if (callback) {
+            callback();
+        }
+    }
+
+    $(function() {
+        function updateRemainingDays() {
+            var expirationDateStr = $("#id_expiration_date").val();
+            var expirationDate = new Date(expirationDateStr);
+            var today = new Date();
+            var remainingDays = Math.ceil((expirationDate - today) / (1000 * 60 * 60 * 24));
+            $("#id_remaining_days").val(remainingDays);
+        }
+
+        function updateExpirationDate() {
+            var remainingDays = parseInt($("#id_remaining_days").val());
+            var today = new Date();
+            var expirationDate = new Date(today.getTime() + remainingDays * 24 * 60 * 60 * 1000);
+            var formattedDate = $.datepicker.formatDate('yy-mm-dd', expirationDate);
+            $("#id_expiration_date").datepicker("setDate", formattedDate);
+        }
+
+        function setDuration(days) {
+            $("#id_remaining_days").val(days);
+            updateExpirationDate();
+        }
+
+        function checkExpirationAndEnableToggle() {
+            var expirationDateStr = $("#id_expiration_date").val();
+            if (!expirationDateStr) return;
+            
+            var expirationDate = new Date(expirationDateStr);
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            expirationDate.setHours(0, 0, 0, 0);
+            
+            var statusToggle = $("#status-toggle");
+            var wrapper = $(".status-toggle-wrapper");
+            var desc = $(".status-desc");
+            
+            // If expiration date is in the future and account is expired, enable the toggle
+            if (expirationDate > today && statusToggle.prop('disabled')) {
+                statusToggle.prop('disabled', false);
+                desc.html('Account expiration date has been extended - you can now activate it');
+                // Update hint if it exists
+                var hint = wrapper.parent().find('.hint');
+                if (hint.length) {
+                    hint.html('✓ Expiration date extended - account will be automatically activated when saved')
+                        .css('color', 'var(--success)');
+                }
+            } else if (expirationDate <= today && wrapper.hasClass('is-expired')) {
+                // If expiration date is in the past and account is expired, keep toggle disabled
+                statusToggle.prop('disabled', true);
+                desc.html('Account has expired - extend expiration date to reactivate');
+                var hint = wrapper.parent().find('.hint');
+                if (hint.length) {
+                    hint.html('⚠ Expired accounts must have their expiration date extended before they can be activated')
+                        .css('color', 'var(--danger)');
+                }
+            }
+        }
+
+        $("#id_expiration_date").datepicker({
+            dateFormat: 'yy-mm-dd',
+            onSelect: function(selectedDate) {
+                updateRemainingDays();
+                checkExpirationAndEnableToggle();
+            }
+        });
+
+        $("#id_remaining_days").change(function() {
+            updateExpirationDate();
+            checkExpirationAndEnableToggle();
+        });
+
+        // Duration preset buttons
+        $(".duration-btn").click(function() {
+            var days = $(this).data('days');
+            setDuration(days);
+        });
+
+        // Status toggle switch behavior
+        $("#status-toggle").change(function() {
+            var wrapper = $(".status-toggle-wrapper");
+            var badge = $(".status-info .status-badge");
+            var desc = $(".status-desc");
+            var hiddenInput = $("#status-value");
+            
+            if ($(this).is(':checked')) {
+                wrapper.removeClass('is-disabled is-expired').addClass('is-active');
+                badge.text('Active');
+                desc.text('Account is active and can connect to VPN');
+                hiddenInput.val('active');
+            } else {
+                wrapper.removeClass('is-active is-expired').addClass('is-disabled');
+                badge.text('Disabled');
+                desc.text('Account is disabled and cannot connect');
+                hiddenInput.val('disabled');
+            }
+        });
+    });
+
+    function resetUsage(accountId, accountName) {
+        showModal({
+            type: 'warning',
+            icon: '↺',
+            title: 'Reset Usage',
+            message: `Are you sure you want to reset usage statistics for account <strong>${accountName}</strong>?<br><br>This will set upload, download, and total usage to zero.`,
+            confirmText: 'Reset Usage',
+            onConfirm: function() {
+                $.ajax({
+                    url: "/account/" + accountId + "/reset-usage/",
+                    method: "POST",
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
+                    success: function(data) {
+                        if (data.success) {
+                            $('.usage-stat.upload .value').text('0 B');
+                            $('.usage-stat.download .value').text('0 B');
+                            $('.usage-stat.total .value').text('0 B');
+                            showToast('Usage has been reset');
+                        } else {
+                            showToast(data.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        showToast('Failed to reset usage', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    function downloadConfig(accountNumber) {
+        // First check if the file exists via AJAX
+        $.ajax({
+            url: "/download/" + accountNumber + "/",
+            method: "GET",
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(data, textStatus, xhr) {
+                // File exists, trigger actual download
+                window.location.href = "/download/" + accountNumber + "/";
+            },
+            error: function(xhr) {
+                var errorMsg = 'Configuration file not found for account "' + accountNumber + '". The .ovpn file may not have been generated yet.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                showModal({
+                    type: 'danger',
+                    icon: '❌',
+                    title: 'Download Failed',
+                    message: errorMsg,
+                    confirmText: 'OK',
+                    hideCancel: true,
+                    onConfirm: function() {}
+                });
+            }
+        });
+    }
+
+    // Modal button handlers
+    $(document).ready(function() {
+        $('#modal-cancel-btn').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closeModal();
+        });
+        
+        $('#modal-confirm-btn').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            confirmModal();
+        });
+        
+        // Close modal on overlay click
+        $('#confirm-modal').on('click', function(e) {
+            if (e.target === this) {
+                e.preventDefault();
+                closeModal();
+            }
+        });
+        
+        // Prevent clicks inside modal content from closing
+        $('#confirm-modal .modal-content').on('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Close modal on Escape key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && modalIsOpen) {
+                closeModal();
+            }
+        });
+
+        // Tab switching
+        $('.tab-btn').on('click', function() {
+            const tabId = $(this).data('tab');
+            
+            // Remove active class from all tabs and content
+            $('.tab-btn').removeClass('active');
+            $('.tab-content').removeClass('active');
+            
+            // Add active class to clicked tab and corresponding content
+            $(this).addClass('active');
+            $('#tab-' + tabId).addClass('active');
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="header">
+        <h1>Update Account</h1>
+        <div class="buttons">
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'account_list' %}{% endif %}" class="button-4">← Back</a>
+        </div>
+    </div>
+
+    <!-- Usage Statistics Card -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2><span class="icon">📊</span> Usage Statistics</h2>
+            <button type="button" class="btn btn-danger" onclick="resetUsage({{ account.id }}, '{{ account.account_number }}')">
+                ↺ Reset Usage
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="usage-grid">
+                <div class="usage-stat download">
+                    <div class="label">Download (Received)</div>
+                    <div class="value">{{ account.total_bytes_sent_human }}</div>
+                    <div class="icon-bg">⬇</div>
+                </div>
+                <div class="usage-stat upload">
+                    <div class="label">Upload (Sent)</div>
+                    <div class="value">{{ account.total_bytes_received_human }}</div>
+                    <div class="icon-bg">⬆</div>
+                </div>
+                <div class="usage-stat total">
+                    <div class="label">Total Usage</div>
+                    <div class="value">{{ account.total_usage_human }}</div>
+                    <div class="icon-bg">📈</div>
+                </div>
+            </div>
+            <div class="usage-meta">
+                {% if account.usage_last_updated %}
+                <div class="usage-meta-item">
+                    <span>🕐</span> Last updated: {{ account.usage_last_updated|date:"M d, Y H:i" }}
+                </div>
+                {% endif %}
+                {% if account.usage_reset_at %}
+                <div class="usage-meta-item">
+                    <span>↺</span> Last reset: {{ account.usage_reset_at|date:"M d, Y H:i" }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Container -->
+    <div class="tabs-container">
+        <ul class="tabs-nav">
+            <li>
+                <button type="button" class="tab-btn active" data-tab="details">
+                    <span class="icon">⚙️</span> Account Details
+                </button>
+            </li>
+            <li>
+                <button type="button" class="tab-btn" data-tab="usage">
+                    <span class="icon">📊</span> Usage History
+                </button>
+            </li>
+        </ul>
+
+        <!-- Account Details Tab -->
+        <div id="tab-details" class="tab-content active">
+            <form id="update-account-form" method="post">
+                {% csrf_token %}
+                <!-- Hidden field for account_number since the visible one is disabled -->
+                <input type="hidden" name="account_number" value="{{ account.account_number }}">
+                {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+                <div class="form-grid">
+                    <!-- Row 1: Identity Fields -->
+                    <div class="form-group">
+                        <label for="id_account_number">Account Number</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">#</span>
+                            <div class="account-number-display">
+                                <span class="account-number-value">{{ account.account_number }}</span>
+                                <span class="readonly-badge">Read Only</span>
+                            </div>
+                        </div>
+                        <div class="hint">Account number cannot be changed</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_user">Assigned User</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">👤</span>
+                            {{ form.user }}
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Time-related Fields -->
+                    <div class="form-group">
+                        <label for="id_expiration_date">Expiration Date</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📅</span>
+                            {{ form.expiration_date }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_remaining_days">Remaining Days</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">⏱</span>
+                            {{ form.remaining_days }}
+                        </div>
+                        <div class="duration-presets">
+                            <button type="button" class="duration-btn" data-days="7">7d</button>
+                            <button type="button" class="duration-btn" data-days="30">30d</button>
+                            <button type="button" class="duration-btn" data-days="90">90d</button>
+                            <button type="button" class="duration-btn" data-days="180">6mo</button>
+                            <button type="button" class="duration-btn" data-days="365">1yr</button>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Status Toggle (Full Width) -->
+                    <div class="form-group full-width">
+                        <label>Account Status</label>
+                        <div class="status-toggle-wrapper {% if account.status == 'active' %}is-active{% elif account.status == 'disabled' %}is-disabled{% else %}is-expired{% endif %}">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="status-toggle" {% if account.status == 'active' %}checked{% endif %} {% if account.status == 'expired' and not expiration_in_future %}disabled{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <input type="hidden" name="status" id="status-value" value="{{ account.status }}">
+                            <div class="status-info">
+                                <div class="status-label">
+                                    Status: <span class="status-badge">{{ account.status|title }}</span>
+                                </div>
+                                <div class="status-desc">
+                                    {% if account.status == 'active' %}
+                                        Account is active and can connect to VPN
+                                    {% elif account.status == 'disabled' %}
+                                        Account is disabled and cannot connect
+                                    {% else %}
+                                        {% if expiration_in_future %}
+                                            Account expiration date has been extended - you can now activate it
+                                        {% else %}
+                                            Account has expired - extend expiration date to reactivate
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% if account.status == 'expired' %}
+                            {% if expiration_in_future %}
+                                <div class="hint" style="color: var(--success);">✓ Expiration date extended - account will be automatically activated when saved</div>
+                            {% else %}
+                                <div class="hint" style="color: var(--danger);">⚠ Expired accounts must have their expiration date extended before they can be activated</div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+
+                <div class="form-actions">
+                    <div class="btn-group">
+                        <button type="button" onclick="downloadConfig('{{ account.account_number }}')" class="btn btn-secondary">
+                            📥 Download Config
+                        </button>
+                        <a href="{% url 'account_sessions' account.id %}" class="btn btn-secondary">Sessions</a>
+                    </div>
+                    <div class="btn-group">
+                        <form method="post" action="{% url 'renew_account_certificate' account.id %}" onsubmit="return confirm('Are you sure you want to renew this certificate?');">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'account_update' account.id %}">
+                            <button type="submit" class="btn btn-secondary">⟳ Renew</button>
+                        </form>
+                        <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'account_list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" form="update-account-form" class="btn btn-primary">💾 Save Changes</button>
+                    </div>
+                </div>
+        </div>
+
+        <!-- Usage History Tab -->
+        <div id="tab-usage" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Usage History</h3>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <label for="usage-days-filter" style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">Period:</label>
+                    <select id="usage-days-filter" onchange="window.location.href='?days=' + this.value" style="padding: 8px 36px 8px 12px; border: 2px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-body); color: var(--text-primary); font-size: 13px; font-weight: 500; cursor: pointer; appearance: none; background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' fill=\'%236b7280\' viewBox=\'0 0 16 16\'%3E%3Cpath d=\'M8 11L3 6h10l-5 5z\'/%3E%3C/svg%3E'); background-repeat: no-repeat; background-position: right 12px center; transition: all 0.2s ease;">
+                        <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                        <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                        <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                        <option value="180" {% if days == 180 %}selected{% endif %}>Last 180 days</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                    {% if daily_stats %}
+                    <!-- Summary Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Total Days</div>
+                            <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ totals.total_days }}</div>
+                        </div>
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Total Download</div>
+                            <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ totals.total_bytes_sent_human }}</div>
+                        </div>
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Total Upload</div>
+                            <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ totals.total_bytes_received_human }}</div>
+                        </div>
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Total Usage</div>
+                            <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ totals.total_bytes_human }}</div>
+                        </div>
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Total Sessions</div>
+                            <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ totals.total_sessions }}</div>
+                        </div>
+                        <div style="background: var(--bg-body); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;">Avg Daily Usage</div>
+                            <div style="font-size: 20px; font-weight: 700; color: var(--text-primary);">{{ totals.avg_daily_bytes_human }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Stats Table -->
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                            <thead>
+                                <tr style="background: var(--bg-body);">
+                                    <th style="text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 2px solid var(--border-default);">Date</th>
+                                    <th style="text-align: right; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 2px solid var(--border-default);">Download</th>
+                                    <th style="text-align: right; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 2px solid var(--border-default);">Upload</th>
+                                    <th style="text-align: right; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 2px solid var(--border-default);">Total</th>
+                                    <th style="text-align: center; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 2px solid var(--border-default);">Sessions</th>
+                                    <th style="text-align: center; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 2px solid var(--border-default);">Avg Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in daily_stats %}
+                                <tr style="border-bottom: 1px solid var(--border-subtle);">
+                                    <td style="padding: 10px 12px; font-weight: 600; color: var(--text-primary);">{{ stat.date|date:"M d, Y" }}</td>
+                                    <td style="padding: 10px 12px; text-align: right; font-family: monospace; font-size: 12px; color: var(--text-secondary);">{{ stat.bytes_sent_human }}</td>
+                                    <td style="padding: 10px 12px; text-align: right; font-family: monospace; font-size: 12px; color: var(--text-secondary);">{{ stat.bytes_received_human }}</td>
+                                    <td style="padding: 10px 12px; text-align: right; font-family: monospace; font-size: 12px; font-weight: 600; color: var(--info);">{{ stat.total_bytes_human }}</td>
+                                    <td style="padding: 10px 12px; text-align: center; color: var(--text-secondary);">{{ stat.session_count }}</td>
+                                    <td style="padding: 10px 12px; text-align: center; color: var(--text-secondary);">{{ stat.avg_session_duration_human }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                        <p>No usage history available for the selected period.</p>
+                        <p style="margin-top: 10px; font-size: 12px;">Run <code>python manage.py aggregate_daily_stats</code> to generate statistics.</p>
+                    </div>
+                    {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon warning">⚠</div>
+            <h3 class="modal-title">Confirm Action</h3>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to proceed?
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="modal-btn modal-btn-cancel" id="modal-cancel-btn">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-confirm modal-btn-warning" id="modal-confirm-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

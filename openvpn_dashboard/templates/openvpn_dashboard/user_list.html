@@ -1,0 +1,666 @@
+{% extends 'openvpn_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}User List - OpenVPN Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page Layout - Constrained Width */
+    .page-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    /* Card Layout */
+    .content-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        overflow-x: auto;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card-header .icon {
+        font-size: 22px;
+    }
+
+    .card-header .badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    /* User Avatar in Table */
+    .user-avatar-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 600;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(0, 102, 204, 0.2);
+    }
+
+    .user-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-name-details {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .user-name-text {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 14px;
+    }
+
+    .user-phone-text {
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+
+    .user-info-preview {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    /* Users Table */
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .users-table th {
+        text-align: left;
+        padding: 14px 20px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-default);
+        background: var(--bg-body);
+    }
+
+    .users-table td {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+    }
+
+    .users-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .users-table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    .users-table tbody tr:hover td {
+        background: var(--bg-hover);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 8px;
+        white-space: nowrap;
+        align-items: center;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .action-btn-edit {
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .action-btn-edit:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+
+    .action-btn-delete {
+        background: var(--danger-bg);
+        color: var(--danger-text);
+    }
+
+    .action-btn-delete:hover {
+        background: var(--danger);
+        color: white;
+    }
+
+    /* Sortable column styling */
+    th.sortable {
+        user-select: none;
+        position: relative;
+        padding-right: 28px !important;
+        cursor: pointer;
+    }
+    th.sortable:hover {
+        background-color: var(--bg-active);
+    }
+    .sort-icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 10px;
+        opacity: 0.4;
+        transition: opacity var(--transition-fast);
+    }
+    .sort-icon::after {
+        content: "⇅";
+    }
+    th.sortable:hover .sort-icon {
+        opacity: 0.7;
+    }
+    th.sort-asc .sort-icon,
+    th.sort-desc .sort-icon {
+        opacity: 1;
+    }
+    th.sort-asc .sort-icon::after {
+        content: "↑";
+    }
+    th.sort-desc .sort-icon::after {
+        content: "↓";
+    }
+
+    /* Clickable Row */
+    .clickable-row {
+        cursor: pointer;
+    }
+
+    .clickable-link {
+        color: inherit;
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+    .clickable-link:visited {
+        color: inherit;
+    }
+    .clickable-link:hover {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    .empty-state h3 {
+        margin: 0 0 8px;
+        color: var(--text-secondary);
+    }
+
+    .empty-state p {
+        margin: 0 0 20px;
+    }
+
+    /* Buttons */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 18px;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        text-decoration: none;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+        color: white;
+    }
+
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        color: var(--text-inverse);
+        text-decoration: none;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.2s ease;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-content {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.25s ease;
+    }
+
+    .modal-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+        background: rgba(220, 53, 69, 0.15);
+        color: var(--danger);
+    }
+
+    .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .modal-body {
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+
+    .modal-body strong {
+        color: var(--text-primary);
+    }
+
+    .modal-footer {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+    }
+
+    .modal-btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: none;
+    }
+
+    .modal-btn-cancel {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border: 1px solid var(--border-default);
+    }
+
+    .modal-btn-cancel:hover {
+        background: var(--bg-active);
+        border-color: var(--border-strong);
+    }
+
+    .modal-btn-danger {
+        background: var(--danger);
+        color: var(--text-inverse);
+    }
+
+    .modal-btn-danger:hover {
+        background: var(--danger);
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .page-wrapper {
+            padding: 0 12px;
+        }
+
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .header .buttons { width: 100%; }
+
+        .card-header {
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .users-table {
+            min-width: 560px;
+        }
+
+        .users-table th,
+        .users-table td {
+            padding: 12px 14px;
+        }
+
+        .user-info-preview {
+            display: none;
+        }
+
+        .action-buttons {
+            flex-wrap: nowrap;
+            gap: 6px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .users-table th:nth-child(3),
+        .users-table td:nth-child(3) {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let modalCallback = null;
+
+    function showModal(options) {
+        const modal = document.getElementById('confirm-modal');
+        const title = modal.querySelector('.modal-title');
+        const body = modal.querySelector('.modal-body');
+
+        title.textContent = options.title;
+        body.innerHTML = options.message;
+
+        modalCallback = options.onConfirm;
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('confirm-modal').classList.remove('active');
+        modalCallback = null;
+    }
+
+    function confirmModal() {
+        if (modalCallback) {
+            modalCallback();
+        }
+        closeModal();
+    }
+
+    function confirmDelete(userName, userId, accountCount, accountsList) {
+        let message = `Are you sure you want to permanently delete user <strong>${userName}</strong>?`;
+        
+        if (accountCount > 0) {
+            message += `<br><br><div style="background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.3); border-radius: 8px; padding: 12px; margin-top: 8px;">`;
+            message += `<div style="color: var(--danger); font-weight: 600; margin-bottom: 8px;">⚠️ Warning: ${accountCount} account(s) will be deleted:</div>`;
+            message += `<ul style="margin: 0; padding-left: 20px; color: var(--text-secondary);">`;
+            accountsList.forEach(function(account) {
+                message += `<li style="margin: 4px 0;"><code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">${account}</code></li>`;
+            });
+            message += `</ul>`;
+            message += `<div style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">All OpenVPN certificates will be revoked.</div>`;
+            message += `</div>`;
+        } else {
+            message += `<br><br><span style="color: var(--text-muted);">This user has no accounts.</span>`;
+        }
+        
+        showModal({
+            title: 'Delete User',
+            message: message,
+            onConfirm: function() {
+                document.getElementById("delete-form-" + userId).submit();
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        // Close modal on overlay click
+        $('#confirm-modal').on('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Close modal on Escape key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    });
+
+    var currentSortCol = null;
+    var currentSortDir = null;
+    
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("userTable");
+        switching = true;
+        
+        // Determine sort direction
+        if (currentSortCol === n) {
+            dir = currentSortDir === "asc" ? "desc" : "asc";
+        } else {
+            dir = "asc";
+        }
+        currentSortCol = n;
+        currentSortDir = dir;
+        
+        // Update sort icons
+        updateSortIcons(n, dir);
+        
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                // Get text content (handles links and plain text)
+                var xVal = (x.textContent || x.innerText).toLowerCase().trim();
+                var yVal = (y.textContent || y.innerText).toLowerCase().trim();
+                if (dir == "asc") {
+                    if (xVal > yVal) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (xVal < yVal) {
+                        shouldSwitch = true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            }
+        }
+    }
+    
+    function updateSortIcons(activeCol, dir) {
+        // Remove all sort classes
+        document.querySelectorAll('th.sortable').forEach(function(th) {
+            th.classList.remove('sort-asc', 'sort-desc');
+        });
+        // Add sort class to active column
+        var activeHeader = document.querySelector('th.sortable[data-col="' + activeCol + '"]');
+        if (activeHeader) {
+            activeHeader.classList.add('sort-' + dir);
+        }
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="header">
+        <h1>User Management</h1>
+        <div class="buttons">
+            <a href="{% url 'account_list' %}" class="button-4">← Back to Accounts</a>
+        </div>
+    </div>
+
+    <!-- Users Card -->
+    <div class="content-card">
+        <div class="card-header">
+            <h2><span class="icon">👥</span> Users <span class="badge">{{ users|length }}</span></h2>
+            <a href="{% url 'user_create' %}" class="btn btn-success">+ New User</a>
+        </div>
+        <div style="padding: 0;">
+            {% if users %}
+            <table class="users-table" id="userTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)" class="sortable" data-col="0">User <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(1)" class="sortable" data-col="1">Phone <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(2)" class="sortable" data-col="2">Notes <span class="sort-icon"></span></th>
+                        <th style="width: 160px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr class="clickable-row" onclick="if(!event.target.closest('.action-btn')) window.location='{% url 'user_update' user.id %}'">
+                        <td>
+                            <div class="user-name-cell">
+                                <span class="user-avatar-sm">{{ user.name|slice:":1"|upper }}</span>
+                                <div class="user-name-details">
+                                    <a href="{% url 'user_update' user.id %}" class="clickable-link user-name-text">{{ user.name }}</a>
+                                    <span class="user-phone-text">{{ user.phone|default:"No phone" }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ user.phone|default:"-" }}</td>
+                        <td>
+                            <span class="user-info-preview">{{ user.info|default:"-" }}</span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'user_update' user.id %}" class="action-btn action-btn-edit">✏️ Edit</a>
+                                <button onclick="event.stopPropagation(); confirmDelete('{{ user.name|escapejs }}', '{{ user.id }}', {{ user.account_count }}, {{ user.accounts_list|safe }})" class="action-btn action-btn-delete">🗑 Delete</button>
+                                <form id="delete-form-{{ user.id }}" method="post" action="{% url 'user_delete' user.id %}" style="display: none;">
+                                    {% csrf_token %}
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="icon">👥</div>
+                <h3>No Users Yet</h3>
+                <p>Get started by creating your first user.</p>
+                <a href="{% url 'user_create' %}" class="btn btn-success">+ Create First User</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon">🗑</div>
+            <h3 class="modal-title">Confirm Action</h3>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to proceed?
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-danger" onclick="confirmModal()">Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

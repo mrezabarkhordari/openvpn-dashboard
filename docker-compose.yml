@@ -1,0 +1,239 @@
+# Dual deploy:
+#   Mode A (full stack): docker compose --profile vpn up -d
+#   Mode B (UI-only):    docker compose up -d   # web/collector/scheduler; no openvpn
+#   Simple (one container, supervisord): docker compose --profile simple up -d
+# Shared host tree at OPENVPN_DATA_DIR (default ./stack-data/openvpn).
+# UI-only attach: OPENVPN_DATA_DIR=/etc/openvpn (do not start the vpn profile / angristan).
+
+x-ui-common: &ui-common
+  image: ${IMAGE_NAME:-openvpn-dashboard}:${IMAGE_TAG:-latest}
+  restart: unless-stopped
+  user: root
+
+services:
+  openvpn:
+    profiles:
+      - vpn
+    build:
+      context: ./docker/openvpn
+      dockerfile: Dockerfile
+    container_name: ${OPENVPN_CONTAINER_NAME:-openvpn}
+    hostname: openvpn
+    restart: unless-stopped
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+    ports:
+      - "${OPENVPN_PORT:-1194}:${OPENVPN_PORT:-1194}/${OPENVPN_PROTO:-udp}"
+    environment:
+      OPENVPN_DIR: /etc/openvpn
+      OPENVPN_ENDPOINT: ${OPENVPN_ENDPOINT:-${OPENVPN_SERVER_ADDRESS:-}}
+      OPENVPN_LISTEN_IP: ${OPENVPN_LISTEN_IP:-}
+      OPENVPN_PORT: ${OPENVPN_PORT:-1194}
+      OPENVPN_CLIENT_PORT: ${OPENVPN_CLIENT_PORT:-${OPENVPN_SERVER_PORT:-1194}}
+      OPENVPN_PROTO: ${OPENVPN_PROTO:-${OPENVPN_PROTOCOL:-udp}}
+      OPENVPN_SUBNET: ${OPENVPN_SUBNET:-10.8.0.0/24}
+      OPENVPN_IPV6: ${OPENVPN_IPV6:-n}
+      OPENVPN_DNS_CHOICE: ${OPENVPN_DNS_CHOICE:-11}
+      OPENVPN_DNS1: ${OPENVPN_DNS1:-}
+      OPENVPN_DNS2: ${OPENVPN_DNS2:-}
+      OPENVPN_CLIENT_TO_CLIENT: ${OPENVPN_CLIENT_TO_CLIENT:-n}
+      OPENVPN_ROUTE_INTERNET: ${OPENVPN_ROUTE_INTERNET:-y}
+      OPENVPN_CIPHER: ${OPENVPN_CIPHER:-AES-256-GCM}
+      OPENVPN_MULTI_CLIENT: ${OPENVPN_MULTI_CLIENT:-n}
+      OPENVPN_LOCAL_NETWORKS: ${OPENVPN_LOCAL_NETWORKS:-}
+      OPENVPN_STATUS_FILE: /etc/openvpn/status.log
+      OPENVPN_STATUS_INTERVAL: ${OPENVPN_STATUS_INTERVAL:-10}
+      OPENVPN_MANAGEMENT_PORT: ${OPENVPN_MANAGEMENT_PORT:-7505}
+      OPENVPN_CERT_EXPIRE: ${OPENVPN_CERT_EXPIRE:-825}
+      EASYRSA_CERT_EXPIRE: ${OPENVPN_CERT_EXPIRE:-825}
+    volumes:
+      - ${OPENVPN_DATA_DIR:-./stack-data/openvpn}:/etc/openvpn
+    networks:
+      - openvpn_net
+
+  web:
+    <<: *ui-common
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: openvpn-dashboard
+    ports:
+      - target: 8000
+        published: ${WEB_PORT:-8800}
+        protocol: tcp
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:?Secret key is required}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      TIME_ZONE: ${TIME_ZONE:-UTC}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Admin password is required}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@localhost}
+      DATABASE_PATH: /app/data/db.sqlite3
+      STATIC_ROOT: /app/staticfiles
+      OPENVPN_DIR: /etc/openvpn
+      OPENVPN_EASY_RSA_DIR: /etc/openvpn/easy-rsa
+      OPENVPN_CCD_DIR: /etc/openvpn/ccd
+      OPENVPN_LOG_DIR: /etc/openvpn
+      OPENVPN_STATUS_LOG: /etc/openvpn/status.log
+      OPENVPN_CLIENT_CONFIG_DIR: /app/configs
+      OPENVPN_SERVER_ADDRESS: ${OPENVPN_SERVER_ADDRESS:-${OPENVPN_ENDPOINT:-127.0.0.1}}
+      OPENVPN_SERVER_PORT: ${OPENVPN_SERVER_PORT:-${OPENVPN_PORT:-1194}}
+      OPENVPN_PROTOCOL: ${OPENVPN_PROTOCOL:-${OPENVPN_PROTO:-udp}}
+      OPENVPN_CERT_EXPIRE: ${OPENVPN_CERT_EXPIRE:-825}
+      EASYRSA_CERT_EXPIRE: ${OPENVPN_CERT_EXPIRE:-825}
+      SERVER_URL: ${SERVER_URL:-}
+      SERVER_PORT: ${SERVER_PORT:-}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-False}
+      CSRF_COOKIE_SECURE: ${CSRF_COOKIE_SECURE:-False}
+    volumes:
+      - ${DATABASE_HOST_PATH:-./stack-data/ui}:/app/data
+      - ${CLIENT_CONFIGS_PATH:-./ovpn-configs}:/app/configs
+      - openvpn-dashboard-static:/app/staticfiles
+      - ${OPENVPN_DATA_DIR:-./stack-data/openvpn}:/etc/openvpn
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/login/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - openvpn_net
+
+  collector:
+    <<: *ui-common
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: openvpn-dashboard-collector
+    command: ["collector"]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:?Secret key is required}
+      DATABASE_PATH: /app/data/db.sqlite3
+      OPENVPN_STATUS_LOG: /etc/openvpn/status.log
+      USAGE_COLLECTOR_INTERVAL: ${USAGE_COLLECTOR_INTERVAL:-2.0}
+      USAGE_COMMIT_INTERVAL: ${USAGE_COMMIT_INTERVAL:-10.0}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      TIME_ZONE: ${TIME_ZONE:-UTC}
+    volumes:
+      - ${DATABASE_HOST_PATH:-./stack-data/ui}:/app/data
+      - ${OPENVPN_DATA_DIR:-./stack-data/openvpn}:/etc/openvpn:ro
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - openvpn_net
+
+  scheduler:
+    <<: *ui-common
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: openvpn-dashboard-scheduler
+    command: ["python", "manage.py", "check_expired_accounts", "--daemon"]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:?Secret key is required}
+      DATABASE_PATH: /app/data/db.sqlite3
+      OPENVPN_CCD_DIR: /etc/openvpn/ccd
+      EXPIRATION_CHECK_INTERVAL: ${EXPIRATION_CHECK_INTERVAL:-3600}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      TIME_ZONE: ${TIME_ZONE:-UTC}
+    volumes:
+      - ${DATABASE_HOST_PATH:-./stack-data/ui}:/app/data
+      - ${OPENVPN_DATA_DIR:-./stack-data/openvpn}:/etc/openvpn
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - openvpn_net
+
+  # Former docker-compose.simple.yml: web + collector + scheduler in one container.
+  # Usage: docker compose --profile simple up -d
+  # Do not start together with web/collector/scheduler (same host port / DB).
+  openvpn-dashboard-simple:
+    <<: *ui-common
+    profiles:
+      - simple
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        UID: 1000
+        GID: 1000
+    container_name: openvpn-dashboard-simple
+    user: root
+    ports:
+      - "${WEB_PORT:-8800}:8000"
+    command: ["supervisord", "-c", "/app/supervisord.conf"]
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:?Secret key is required}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-*}
+      TIME_ZONE: ${TIME_ZONE:-UTC}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Admin password is required}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@localhost}
+      DATABASE_PATH: /app/data/db.sqlite3
+      STATIC_ROOT: /app/staticfiles
+      OPENVPN_DIR: /etc/openvpn
+      OPENVPN_EASY_RSA_DIR: /etc/openvpn/easy-rsa
+      OPENVPN_CCD_DIR: /etc/openvpn/ccd
+      OPENVPN_LOG_DIR: /etc/openvpn
+      OPENVPN_STATUS_LOG: ${OPENVPN_STATUS_LOG:-/etc/openvpn/status.log}
+      OPENVPN_CLIENT_CONFIG_DIR: /app/configs
+      OPENVPN_SERVER_ADDRESS: ${OPENVPN_SERVER_ADDRESS:-${OPENVPN_ENDPOINT:-127.0.0.1}}
+      OPENVPN_SERVER_PORT: ${OPENVPN_SERVER_PORT:-${OPENVPN_PORT:-1194}}
+      OPENVPN_PROTOCOL: ${OPENVPN_PROTOCOL:-${OPENVPN_PROTO:-udp}}
+      OPENVPN_CERT_EXPIRE: ${OPENVPN_CERT_EXPIRE:-825}
+      EASYRSA_CERT_EXPIRE: ${OPENVPN_CERT_EXPIRE:-825}
+      SERVER_URL: ${SERVER_URL:-}
+      SERVER_PORT: ${SERVER_PORT:-}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-False}
+      CSRF_COOKIE_SECURE: ${CSRF_COOKIE_SECURE:-False}
+      USAGE_COLLECTOR_INTERVAL: ${USAGE_COLLECTOR_INTERVAL:-2.0}
+      USAGE_COMMIT_INTERVAL: ${USAGE_COMMIT_INTERVAL:-10.0}
+      EXPIRATION_CHECK_INTERVAL: ${EXPIRATION_CHECK_INTERVAL:-3600}
+    volumes:
+      - ${DATABASE_HOST_PATH:-./stack-data/ui}:/app/data
+      - ${CLIENT_CONFIGS_PATH:-./ovpn-configs}:/app/configs
+      - openvpn-dashboard-static:/app/staticfiles
+      - ${OPENVPN_DATA_DIR:-./stack-data/openvpn}:/etc/openvpn
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/login/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - openvpn_net
+
+volumes:
+  openvpn-dashboard-static:
+    driver: local
+
+networks:
+  openvpn_net:
+    name: openvpn_net

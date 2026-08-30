@@ -1,0 +1,310 @@
+{% extends 'openvpn_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Daily Usage Statistics - OpenVPN Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-wrapper {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 20px 0;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .header-right {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .date-filter {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .date-filter label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        white-space: nowrap;
+    }
+
+    .date-filter select {
+        padding: 10px 40px 10px 14px;
+        border: 2px solid var(--border-default);
+        border-radius: var(--radius-md);
+        background: var(--bg-body);
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        transition: all 0.2s ease;
+        min-width: 140px;
+    }
+
+    .date-filter select:hover {
+        border-color: var(--border-strong);
+        background-color: var(--bg-surface);
+    }
+
+    .date-filter select:focus {
+        outline: none;
+        border-color: var(--primary);
+        background-color: var(--bg-surface);
+        box-shadow: 0 0 0 4px var(--input-focus-ring);
+    }
+
+    .content-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        overflow-x: auto;
+        margin-bottom: 20px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-subtle);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .stats-table th {
+        text-align: left;
+        padding: 10px 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 2px solid var(--border-default);
+        background: var(--bg-body);
+        white-space: nowrap;
+    }
+
+    .stats-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+    }
+
+    .stats-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .stats-table tr:hover td {
+        background: var(--bg-hover);
+    }
+
+    .usage-cell {
+        font-family: monospace;
+        font-size: 12px;
+        text-align: right;
+        white-space: nowrap;
+        color: var(--text-secondary);
+    }
+
+    .date-cell {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .summary-section {
+        margin-bottom: 30px;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .summary-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+    }
+
+    .summary-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .summary-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-muted);
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    @media (max-width: 768px) {
+        .page-wrapper { padding: 0 12px; }
+        .header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 0;
+        }
+        .header h1 { font-size: 20px; }
+        .header-right {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .date-filter { width: 100%; }
+        .date-filter select { flex: 1; min-width: 0; }
+        .summary-grid { grid-template-columns: 1fr 1fr; }
+        .stats-table { min-width: 960px; }
+    }
+
+    @media (max-width: 480px) {
+        .summary-grid { grid-template-columns: 1fr; }
+        .header-right .button-4 { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrapper">
+    <div class="header">
+        <h1>📊 Daily Usage Statistics</h1>
+        <div class="header-right">
+            <div class="date-filter">
+                <label for="days-filter">Period:</label>
+                <select id="days-filter" onchange="window.location.href='?days=' + this.value">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 days</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 days</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 days</option>
+                    <option value="180" {% if days == 180 %}selected{% endif %}>Last 180 days</option>
+                </select>
+            </div>
+            <a href="{% url 'account_list' %}" class="button-4">← Back to Accounts</a>
+        </div>
+    </div>
+
+    <!-- Summary Section -->
+    {% if server_stats %}
+    <div class="summary-section">
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">Date Range</div>
+                <div class="summary-value">{{ start_date|date:"M d" }} - {{ end_date|date:"M d, Y" }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Days</div>
+                <div class="summary-value">{{ server_stats|length }}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total Accounts</div>
+                <div class="summary-value">{% if server_stats %}{{ server_stats.0.total_accounts|default:"0" }}{% else %}0{% endif %}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Server-Wide Daily Statistics -->
+    {% if server_stats %}
+    <div class="content-card">
+        <div class="card-header">
+            <h2>🖥️ Server-Wide Daily Statistics</h2>
+        </div>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Active Accounts</th>
+                    <th>Total Accounts</th>
+                    <th>Download</th>
+                    <th>Upload</th>
+                    <th>Total Usage</th>
+                    <th>Total Sessions</th>
+                    <th>Total Duration</th>
+                    <th>Avg Session Duration</th>
+                    <th>First Connection</th>
+                    <th>Last Connection</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stat in server_stats %}
+                <tr>
+                    <td class="date-cell">{{ stat.date|date:"M d, Y" }}</td>
+                    <td>{{ stat.active_accounts }}</td>
+                    <td>{{ stat.total_accounts }}</td>
+                    <td class="usage-cell">{{ stat.total_bytes_sent_human }}</td>
+                    <td class="usage-cell">{{ stat.total_bytes_received_human }}</td>
+                    <td class="usage-cell"><strong>{{ stat.total_bytes_human }}</strong></td>
+                    <td>{{ stat.total_sessions }}</td>
+                    <td>{{ stat.total_session_duration_human }}</td>
+                    <td>{{ stat.avg_session_duration_human }}</td>
+                    <td>
+                        {% if stat.first_connection_time %}
+                            {{ stat.first_connection_time|date:"H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if stat.last_connection_time %}
+                            {{ stat.last_connection_time|date:"H:i" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

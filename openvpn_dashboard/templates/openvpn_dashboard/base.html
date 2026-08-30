@@ -1,0 +1,76 @@
+<!-- base.html -->
+{% load static %}
+{% load custom_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/theme.css' %}">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/button.css' %}">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/button-del.css' %}">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/button-edit.css' %}">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/button-active.css' %}">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/button-deactive.css' %}">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/button-download.css' %}">
+    {% block extra_css %}{% endblock %}
+    <title>{% block title %}OpenVPN Dashboard{% endblock %}</title>
+    <!-- Apply theme before page renders to prevent flash -->
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (saved === 'dark' || (!saved && prefersDark)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <ul class="nav-links">
+            <li>
+                <a href="{% url 'account_list' %}" class="nav-link {% if request.resolver_match.url_name == 'account_list' or request.resolver_match.url_name|url_starts_with:'account_' or request.resolver_match.url_name == 'download_file' or request.resolver_match.url_name == 'update_account_status' or request.resolver_match.url_name == 'reset_account_usage' or request.resolver_match.url_name == 'reset_all_usage' or request.resolver_match.url_name == 'renew_account_certificate' or request.resolver_match.url_name == 'account_sessions' %}active{% endif %}">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Accounts</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'user_list' %}" class="nav-link {% if request.resolver_match.url_name == 'user_list' or request.resolver_match.url_name|url_starts_with:'user_' %}active{% endif %}">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Users</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'daily_stats_list' %}" class="nav-link {% if request.resolver_match.url_name == 'daily_stats_list' or request.resolver_match.url_name|url_starts_with:'daily_stats' %}active{% endif %}">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Statistics</span>
+                </a>
+            </li>
+        </ul>
+        <div class="nav-right">
+            {% if user.is_authenticated %}
+            <button id="theme-toggle" type="button" aria-label="Toggle theme" class="theme-toggle-btn"></button>
+            <span class="user-info">👤 {{ user.username }}</span>
+            <a href="{% url 'logout' %}" class="logout-link">Logout</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container">
+        {% block content %}
+        <!-- Content of child templates will be inserted here -->
+        {% endblock %}
+    </div>
+
+    <!-- Embedded HTML code for creating new -->
+    {% block create_new %}
+    <!-- Include your embedded HTML code here -->
+    {% endblock %}
+    
+    {% block extra_js %}{% endblock %}
+    <script src="{% static 'openvpn_dashboard/js/theme.js' %}"></script>
+</body>
+</html>

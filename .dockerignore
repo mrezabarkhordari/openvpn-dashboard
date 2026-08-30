@@ -1,0 +1,78 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+.eggs
+*.egg
+.mypy_cache
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+
+# Virtual environments
+venv
+.venv
+env
+.env
+ENV
+
+# IDE
+.idea
+.vscode
+.cursor
+*.swp
+*.swo
+*~
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.docker
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Development files
+.env.local
+.env.*.local
+*.log
+*.sqlite3
+db.sqlite3
+
+# Static files (will be collected in container)
+staticfiles
+
+# Test files
+tests
+test_*.py
+*_test.py
+conftest.py
+
+# Build artifacts
+dist
+build
+*.egg-info
+
+# Runtime data (PKI is root-owned; must not enter the UI build context)
+stack-data
+data
+ovpn-configs
+vpn/pki
+
+# Misc
+.DS_Store
+Thumbs.db
+*.bak
+ui.img
+
