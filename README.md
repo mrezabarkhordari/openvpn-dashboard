@@ -237,6 +237,13 @@ Keep `DEBUG=False` in production. Set `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`
 | CSRF errors | Set `CSRF_TRUSTED_ORIGINS` (scheme + host + port) |
 | Port already in use | Change `WEB_PORT` in `.env` |
 
+## Acknowledgements
+
+This project would not exist without work published by others. Thank you.
+
+- **[angristan/openvpn-install](https://github.com/angristan/openvpn-install)** — the OpenVPN installer our optional VPN container is built from (PKI, `server.conf`, client profiles). The image pins a known commit and adds a thin wrapper for Docker; the hard parts are Angristan’s.
+- **[tonyseek/openvpn-status](https://github.com/tonyseek/openvpn-status)** — parses OpenVPN `status.log` so the collector can show live connections and usage. That library is the status/usage exporter this UI sits on.
+
 ## License
 
 [MIT](LICENSE)
