@@ -3,7 +3,7 @@ App URL configuration for openvpn_dashboard.
 """
 from django.urls import path
 
-from .services.utils import get_openvpn_config
+from .services.utils import get_openvpn_config, get_openvpn_config_qr
 from .views import (
     admin_login,
     admin_logout,
@@ -61,7 +61,8 @@ urlpatterns = [
     # Certificate management
     path('account/<int:account_id>/renew-certificate/', renew_account_certificate, name='renew_account_certificate'),
 
-    # Downloads
+    # Downloads (QR must stay more specific than the generic download path)
+    path('download/<str:account_number>/qr/', get_openvpn_config_qr, name='download_qr'),
     path('download/<str:account_number>/', get_openvpn_config, name='download_file'),
 
     # Server status

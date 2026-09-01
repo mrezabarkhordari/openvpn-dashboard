@@ -1,0 +1,15 @@
+<div id="confirm-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-icon {{ icon_type|default:'danger' }}">{{ icon|default:'!' }}</div>
+            <h3 class="modal-title">Confirm Action</h3>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to proceed?
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="modal-btn modal-btn-cancel" id="modal-cancel-btn" onclick="if (typeof closeModal === 'function') closeModal()">Cancel</button>
+            <button type="button" class="modal-btn modal-btn-confirm modal-btn-{{ icon_type|default:'danger' }}" id="modal-confirm-btn" onclick="if (typeof confirmModal === 'function') confirmModal()">Confirm</button>
+        </div>
+    </div>
+</div>

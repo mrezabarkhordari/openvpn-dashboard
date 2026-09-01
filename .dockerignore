@@ -52,6 +52,7 @@ db.sqlite3
 
 # Static files (will be collected in container)
 staticfiles
+node_modules
 
 # Test files
 tests

@@ -5,466 +5,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
-<style>
-    .page-wrapper {
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    /* Card Layout */
-    .content-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-md);
-        overflow: hidden;
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
-        padding: 20px 24px;
-        border-bottom: 1px solid var(--border-subtle);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .card-header h2 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .card-header .icon {
-        font-size: 22px;
-    }
-
-    .card-body {
-        padding: 24px;
-    }
-
-    /* Form Styling */
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-    }
-
-    .form-group {
-        position: relative;
-    }
-
-    .form-group.full-width {
-        grid-column: 1 / -1;
-    }
-
-    .form-group label {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--text-secondary);
-        margin-bottom: 8px;
-    }
-
-    .form-group label .required {
-        color: var(--danger);
-        margin-left: 2px;
-    }
-
-    .form-group .input-wrapper {
-        position: relative;
-    }
-
-    .form-group .input-icon {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-muted);
-        font-size: 16px;
-        pointer-events: none;
-        z-index: 1;
-    }
-
-    .form-group input,
-    .form-group select {
-        width: 100%;
-        padding: 14px 16px;
-        padding-left: 44px;
-        border: 2px solid var(--border-default);
-        border-radius: var(--radius-lg);
-        background: var(--bg-body);
-        color: var(--text-primary);
-        font-size: 15px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    .form-group input:hover,
-    .form-group select:hover {
-        border-color: var(--border-strong);
-        background: var(--bg-surface);
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-        outline: none;
-        border-color: var(--primary);
-        background: var(--bg-surface);
-        box-shadow: 0 0 0 4px var(--input-focus-ring);
-    }
-
-    .form-group select {
-        cursor: pointer;
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 14px center;
-        padding-right: 40px;
-    }
-
-    .form-group .hint {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-top: 6px;
-    }
-
-    .form-group .error {
-        color: var(--danger);
-        font-size: 13px;
-        margin-top: 6px;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-    }
-
-    /* Status Toggle Switch */
-    .status-toggle-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 16px 20px;
-        background: var(--bg-body);
-        border: 2px solid var(--border-default);
-        border-radius: var(--radius-lg);
-        transition: all 0.3s ease;
-    }
-
-    .status-toggle-wrapper.is-active {
-        border-color: var(--success);
-        background: var(--success-bg);
-    }
-
-    .status-toggle-wrapper.is-disabled {
-        border-color: var(--warning);
-        background: var(--warning-bg);
-    }
-
-    .toggle-switch {
-        position: relative;
-        width: 56px;
-        height: 30px;
-        flex-shrink: 0;
-    }
-
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: var(--border-strong);
-        border-radius: 30px;
-        transition: all 0.3s ease;
-    }
-
-    .toggle-slider::before {
-        position: absolute;
-        content: "";
-        height: 24px;
-        width: 24px;
-        left: 3px;
-        bottom: 3px;
-        background: white;
-        border-radius: 50%;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .toggle-switch input:checked + .toggle-slider {
-        background: var(--success);
-    }
-
-    .toggle-switch input:checked + .toggle-slider::before {
-        transform: translateX(26px);
-    }
-
-    .toggle-switch input:focus + .toggle-slider {
-        box-shadow: 0 0 0 3px var(--input-focus-ring);
-    }
-
-    .status-info {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-    }
-
-    .status-info .status-label {
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .status-info .status-label .status-badge {
-        padding: 2px 10px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-
-    .status-toggle-wrapper.is-active .status-badge {
-        background: var(--success);
-        color: white;
-    }
-
-    .status-toggle-wrapper.is-disabled .status-badge {
-        background: #b45309;
-        color: #fff;
-    }
-
-    .status-info .status-desc {
-        font-size: 13px;
-        color: var(--text-muted);
-        margin-top: 4px;
-    }
-
-    .status-toggle-wrapper.is-active .status-desc {
-        color: var(--success-text);
-    }
-
-    .status-toggle-wrapper.is-disabled .status-desc {
-        color: #92400e;
-    }
-
-    [data-theme="dark"] .status-toggle-wrapper.is-disabled .status-desc {
-        color: #fbbf24;
-    }
-
-    /* Form Actions */
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 12px;
-        padding: 20px 24px;
-        background: var(--bg-body);
-        border-top: 1px solid var(--border-subtle);
-    }
-
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 24px;
-        border-radius: var(--radius-lg);
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: none;
-        text-decoration: none;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
-        color: white;
-        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
-        color: var(--text-inverse);
-        text-decoration: none;
-    }
-
-    .btn-secondary {
-        background: var(--bg-surface);
-        color: var(--text-primary);
-        border: 2px solid var(--border-default);
-    }
-
-    .btn-secondary:hover {
-        background: var(--bg-hover);
-        border-color: var(--border-strong);
-        text-decoration: none;
-    }
-
-    /* New Account Icon */
-    .new-account-icon {
-        width: 80px;
-        height: 80px;
-        border-radius: var(--radius-xl);
-        background: linear-gradient(135deg, var(--info) 0%, #0891b2 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 36px;
-        color: white;
-        margin: 0 auto 20px;
-        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-    }
-
-    /* Quick Duration Buttons */
-    .duration-presets {
-        display: flex;
-        gap: 8px;
-        margin-top: 8px;
-    }
-
-    .duration-btn {
-        padding: 6px 12px;
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-md);
-        background: var(--bg-body);
-        color: var(--text-secondary);
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.15s ease;
-    }
-
-    .duration-btn:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: var(--primary-light);
-        transform: translateY(-1px);
-    }
-
-    /* Responsive */
-    @media (max-width: 600px) {
-        .page-wrapper { padding: 0 12px; }
-
-        .header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .form-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .status-toggle-wrapper {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .form-actions {
-            flex-direction: column;
-        }
-
-        .form-actions .btn {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .duration-presets {
-            flex-wrap: wrap;
-        }
-    }
-
-    /* jQuery UI Datepicker Override */
-    .ui-datepicker {
-        background: var(--bg-surface) !important;
-        border: 1px solid var(--border-default) !important;
-        border-radius: var(--radius-lg) !important;
-        box-shadow: var(--shadow-lg) !important;
-        padding: 12px !important;
-    }
-
-    .ui-datepicker-header {
-        background: transparent !important;
-        border: none !important;
-        padding: 8px 0 16px !important;
-    }
-
-    .ui-datepicker-title {
-        color: var(--text-primary) !important;
-        font-weight: 600 !important;
-    }
-
-    .ui-datepicker th {
-        color: var(--text-muted) !important;
-        font-weight: 500 !important;
-        padding: 8px !important;
-    }
-
-    .ui-datepicker td {
-        padding: 2px !important;
-    }
-
-    .ui-datepicker td a,
-    .ui-datepicker td span {
-        background: transparent !important;
-        border: none !important;
-        color: var(--text-primary) !important;
-        padding: 8px !important;
-        border-radius: var(--radius-md) !important;
-        text-align: center !important;
-    }
-
-    .ui-datepicker td a:hover {
-        background: var(--bg-hover) !important;
-        color: var(--text-primary) !important;
-    }
-
-    .ui-datepicker .ui-state-active {
-        background: var(--primary) !important;
-        color: white !important;
-    }
-
-    .ui-datepicker .ui-datepicker-prev,
-    .ui-datepicker .ui-datepicker-next {
-        cursor: pointer !important;
-        top: 10px !important;
-    }
-
-    .ui-datepicker .ui-datepicker-prev span,
-    .ui-datepicker .ui-datepicker-next span {
-        display: none !important;
-    }
-
-    .ui-datepicker .ui-datepicker-prev::after {
-        content: '←';
-        color: var(--text-primary);
-        font-size: 18px;
-    }
-
-    .ui-datepicker .ui-datepicker-next::after {
-        content: '→';
-        color: var(--text-primary);
-        font-size: 18px;
-    }
-</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -493,34 +33,28 @@
             updateExpirationDate();
         }
 
-        // Initialize datepicker
         $("#id_expiration_date").datepicker({
             dateFormat: 'yy-mm-dd',
             minDate: 0,
-            onSelect: function(selectedDate) {
+            onSelect: function() {
                 updateRemainingDays();
             }
         });
 
-        // Set default to 30 days
         setDuration(30);
-
-        // Bind events
         $("#id_remaining_days").change(updateExpirationDate);
 
-        // Duration preset buttons
         $(".duration-btn").click(function() {
             var days = $(this).data('days');
             setDuration(days);
         });
 
-        // Status toggle switch behavior
         $("#status-toggle").change(function() {
             var wrapper = $(".status-toggle-wrapper");
             var label = $(".status-label .status-badge");
             var desc = $(".status-desc");
             var hiddenInput = $("#status-value");
-            
+
             if ($(this).is(':checked')) {
                 wrapper.removeClass('is-disabled').addClass('is-active');
                 label.text('Active');
@@ -538,14 +72,14 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-wrapper">
-    <div class="header">
+<div class="page-wrapper max-w-3xl">
+    <div class="page-header">
         <h1>Create New Account{% if preselected_user %} for {{ preselected_user.name }}{% endif %}</h1>
-        <div class="buttons">
+        <div class="page-header-actions">
             {% if preselected_user %}
-            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'user_update' preselected_user.id %}{% endif %}" class="button-4">← Back to {{ preselected_user.name }}</a>
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'user_update' preselected_user.id %}{% endif %}" class="btn btn-outline">Back to {{ preselected_user.name }}</a>
             {% else %}
-            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'account_list' %}{% endif %}" class="button-4">← Back to Accounts</a>
+            <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'account_list' %}{% endif %}" class="btn btn-outline">Back to Accounts</a>
             {% endif %}
         </div>
     </div>
@@ -553,46 +87,33 @@
     <form method="post">
         {% csrf_token %}
         {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
-        <div class="content-card">
+        <div class="card">
             <div class="card-header">
-                <h2><span class="icon">🔐</span> New VPN Account</h2>
+                <h2>
+                    <i data-lucide="key-round" class="h-4 w-4"></i>
+                    New VPN Account
+                </h2>
             </div>
             <div class="card-body">
-                <!-- New Account Icon -->
-                <div class="new-account-icon">🔑</div>
-
                 <div class="form-grid">
-                    <!-- Row 1: User & Account Number (Identity) -->
                     <div class="form-group">
                         <label for="id_user">Assign to User <span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">👤</span>
-                            {{ form.user }}
-                        </div>
+                        {{ form.user }}
                         {% if form.user.errors %}
-                        <div class="error">⚠ {{ form.user.errors.0 }}</div>
+                        <div class="error">{{ form.user.errors.0 }}</div>
                         {% endif %}
                     </div>
-
                     <div class="form-group">
                         <label for="id_account_number">Account Number <span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">#</span>
-                            {{ form.account_number }}
-                        </div>
+                        {{ form.account_number }}
                         <div class="hint">Unique identifier for this account</div>
                         {% if form.account_number.errors %}
-                        <div class="error">⚠ {{ form.account_number.errors.0 }}</div>
+                        <div class="error">{{ form.account_number.errors.0 }}</div>
                         {% endif %}
                     </div>
-
-                    <!-- Row 2: Duration & Expiration (Time-related) -->
                     <div class="form-group">
                         <label for="id_remaining_days">Duration (Days) <span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">⏱</span>
-                            <input type="number" id="id_remaining_days" name="remaining_days" value="30" min="1" required>
-                        </div>
+                        <input type="number" id="id_remaining_days" name="remaining_days" value="30" min="1" required>
                         <div class="duration-presets">
                             <button type="button" class="duration-btn" data-days="7">7d</button>
                             <button type="button" class="duration-btn" data-days="30">30d</button>
@@ -601,17 +122,11 @@
                             <button type="button" class="duration-btn" data-days="365">1yr</button>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label for="id_expiration_date">Expiration Date <span class="required">*</span></label>
-                        <div class="input-wrapper">
-                            <span class="input-icon">📅</span>
-                            <input type="text" id="id_expiration_date" name="expiration_date" required autocomplete="off">
-                        </div>
+                        <input type="text" id="id_expiration_date" name="expiration_date" required autocomplete="off">
                         <div class="hint">Auto-calculated from duration</div>
                     </div>
-
-                    <!-- Row 3: Status Toggle (Full Width) -->
                     <div class="form-group full-width">
                         <label>Initial Status</label>
                         <div class="status-toggle-wrapper is-active">
@@ -620,19 +135,19 @@
                                 <span class="toggle-slider"></span>
                             </label>
                             <input type="hidden" name="status" id="status-value" value="active">
-                            <div class="status-info">
-                                <div class="status-label">
-                                    Account Status: <span class="status-badge">Active</span>
+                            <div>
+                                <div class="status-label text-sm font-medium">
+                                    Account Status: <span class="status-badge active">Active</span>
                                 </div>
-                                <div class="status-desc">Account can connect immediately after creation</div>
+                                <div class="status-desc mt-1 text-xs text-muted-foreground">Account can connect immediately after creation</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="form-actions">
-                <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'account_list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">✓ Create Account</button>
+                <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'account_list' %}{% endif %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Account</button>
             </div>
         </div>
     </form>

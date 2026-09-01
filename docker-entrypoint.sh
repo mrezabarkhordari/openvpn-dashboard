@@ -100,7 +100,7 @@ python manage.py migrate --noinput
 
 echo ""
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --clear
+python manage.py collectstatic --noinput --clear --ignore 'src/*' --ignore 'input.css'
 
 echo ""
 echo "Setting up admin user..."

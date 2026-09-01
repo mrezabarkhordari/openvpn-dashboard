@@ -35,6 +35,9 @@ openvpn-status>=0.2.1
 # Better datetime handling
 python-dateutil>=2.8.2
 
+# QR codes for mobile config import (pure Python, no native deps)
+segno>=1.6.0
+
 # =============================================================================
 # Optional: Development Tools
 # =============================================================================

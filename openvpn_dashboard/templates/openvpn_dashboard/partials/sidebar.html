@@ -1,0 +1,47 @@
+{% load custom_filters %}
+<aside id="sidebar" class="sidebar">
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-mark">
+            <i data-lucide="shield" class="h-4 w-4"></i>
+        </div>
+        <div>
+            <div class="text-sm font-semibold leading-tight">OpenVPN</div>
+            <div class="text-xs text-muted-foreground">Dashboard</div>
+        </div>
+        <button type="button" id="sidebar-close" class="btn btn-ghost btn-icon btn-sm ml-auto md:hidden" aria-label="Close menu">
+            <i data-lucide="x" class="h-4 w-4"></i>
+        </button>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="{% url 'account_list' %}" class="nav-link {% if request.resolver_match.url_name == 'account_list' or request.resolver_match.url_name|url_starts_with:'account_' or request.resolver_match.url_name == 'download_file' or request.resolver_match.url_name == 'download_qr' or request.resolver_match.url_name == 'update_account_status' or request.resolver_match.url_name == 'reset_account_usage' or request.resolver_match.url_name == 'reset_all_usage' or request.resolver_match.url_name == 'renew_account_certificate' or request.resolver_match.url_name == 'account_sessions' %}active{% endif %}">
+            <i data-lucide="key-round" class="h-4 w-4"></i>
+            <span>Accounts</span>
+        </a>
+        <a href="{% url 'user_list' %}" class="nav-link {% if request.resolver_match.url_name == 'user_list' or request.resolver_match.url_name|url_starts_with:'user_' %}active{% endif %}">
+            <i data-lucide="users" class="h-4 w-4"></i>
+            <span>Users</span>
+        </a>
+        <a href="{% url 'daily_stats_list' %}" class="nav-link {% if request.resolver_match.url_name == 'daily_stats_list' or request.resolver_match.url_name|url_starts_with:'daily_stats' %}active{% endif %}">
+            <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+            <span>Statistics</span>
+        </a>
+    </nav>
+    {% if user.is_authenticated %}
+    <div class="sidebar-footer">
+        <div class="mb-2 flex items-center gap-2 px-2 text-sm text-muted-foreground">
+            <i data-lucide="user" class="h-4 w-4"></i>
+            <span class="truncate">{{ user.username }}</span>
+        </div>
+        <div class="flex items-center gap-1">
+            <button id="theme-toggle" type="button" class="btn btn-outline btn-icon btn-sm" aria-label="Toggle theme">
+                <i data-lucide="moon" class="h-4 w-4"></i>
+            </button>
+            <a href="{% url 'logout' %}" class="btn btn-outline btn-sm flex-1 no-underline hover:no-underline">
+                <i data-lucide="log-out" class="h-4 w-4"></i>
+                Logout
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</aside>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>

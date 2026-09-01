@@ -3,218 +3,63 @@
 
 {% block title %}Sessions - {{ account.account_number }} - OpenVPN Dashboard{% endblock %}
 
-{% block extra_css %}
-<style>
-    .page-wrapper {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding: 20px 0;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .header h1 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 600;
-    }
-
-    .header-right {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .content-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-md);
-        overflow-x: auto;
-        margin-bottom: 20px;
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--border-subtle);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .card-header h2 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .account-info {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-lg);
-        padding: 16px 20px;
-        margin-bottom: 20px;
-        color: var(--text-secondary);
-        font-size: 14px;
-    }
-
-    .account-info strong {
-        color: var(--text-primary);
-    }
-
-    .sessions-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-    }
-
-    .sessions-table th {
-        text-align: left;
-        padding: 10px 12px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--text-muted);
-        border-bottom: 2px solid var(--border-default);
-        background: var(--bg-body);
-        white-space: nowrap;
-    }
-
-    .sessions-table td {
-        padding: 10px 12px;
-        border-bottom: 1px solid var(--border-subtle);
-        vertical-align: middle;
-    }
-
-    .sessions-table tr:last-child td {
-        border-bottom: none;
-    }
-
-    .sessions-table tr:hover td {
-        background: var(--bg-hover);
-    }
-
-    .usage-cell {
-        font-family: monospace;
-        font-size: 12px;
-        text-align: right;
-        white-space: nowrap;
-        color: var(--text-secondary);
-    }
-
-    .status-active {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 600;
-        background: var(--success-bg, #dcfce7);
-        color: var(--success, #16a34a);
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 40px 20px;
-        color: var(--text-muted);
-    }
-
-    .empty-state p {
-        margin: 0;
-        font-size: 14px;
-    }
-
-    @media (max-width: 768px) {
-        .page-wrapper { padding: 0 12px; }
-        .header {
-            flex-direction: column;
-            align-items: flex-start;
-            padding: 16px 0;
-        }
-        .header h1 { font-size: 20px; }
-        .header-right { width: 100%; }
-        .header-right .button-4 {
-            flex: 1;
-            justify-content: center;
-            text-align: center;
-        }
-        .account-info { font-size: 13px; }
-        .sessions-table { min-width: 760px; }
-    }
-
-    @media (max-width: 480px) {
-        .header-right .button-4 { flex: 1 1 100%; }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="page-wrapper">
-    <div class="header">
+    <div class="page-header">
         <h1>Sessions: {{ account.account_number }}</h1>
-        <div class="header-right">
-            <a href="{% url 'daily_stats_account' account.id %}" class="button-4">Daily Stats</a>
-            <a href="{% url 'account_update' account.id %}" class="button-4">Edit Account</a>
-            <a href="{% url 'account_list' %}" class="button-4">← Back to Accounts</a>
+        <div class="page-header-actions">
+            <a href="{% url 'daily_stats_account' account.id %}" class="btn btn-outline">Daily Stats</a>
+            <a href="{% url 'account_update' account.id %}" class="btn btn-outline">Edit Account</a>
+            <a href="{% url 'account_list' %}" class="btn btn-outline">Back to Accounts</a>
         </div>
     </div>
 
-    <div class="account-info">
-        <strong>{{ account.account_number }}</strong>
+    <div class="card mb-4 p-4 text-sm text-muted-foreground">
+        <strong class="text-foreground">{{ account.account_number }}</strong>
         · User: {{ account.user.name }}
         · Status: {{ account.status }}
     </div>
 
-    <div class="content-card">
+    <div class="card">
         <div class="card-header">
             <h2>Connection History</h2>
-            <span class="badge">{{ sessions|length }}</span>
+            <span class="badge badge-primary">{{ sessions|length }}</span>
         </div>
         {% if sessions %}
-        <table class="sessions-table">
-            <thead>
-                <tr>
-                    <th>Connected</th>
-                    <th>Disconnected</th>
-                    <th>Duration</th>
-                    <th>Real Address</th>
-                    <th>Virtual Address</th>
-                    <th>Sent</th>
-                    <th>Received</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for session in sessions %}
-                <tr>
-                    <td>{{ session.connected_at|date:"Y-m-d H:i:s" }}</td>
-                    <td>
-                        {% if session.disconnected_at %}
-                            {{ session.disconnected_at|date:"Y-m-d H:i:s" }}
-                        {% else %}
-                            <span class="status-active">Active</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ session.duration_human }}</td>
-                    <td>{{ session.real_address|default:"-" }}</td>
-                    <td>{{ session.virtual_address|default:"-" }}</td>
-                    <td class="usage-cell">{{ session.bytes_sent|filesizeformat }}</td>
-                    <td class="usage-cell">{{ session.bytes_received|filesizeformat }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Connected</th>
+                        <th>Disconnected</th>
+                        <th>Duration</th>
+                        <th>Real Address</th>
+                        <th>Virtual Address</th>
+                        <th>Sent</th>
+                        <th>Received</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td>{{ session.connected_at|date:"Y-m-d H:i:s" }}</td>
+                        <td>
+                            {% if session.disconnected_at %}
+                                {{ session.disconnected_at|date:"Y-m-d H:i:s" }}
+                            {% else %}
+                                <span class="status-badge active">Active</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ session.duration_human }}</td>
+                        <td>{{ session.real_address|default:"-" }}</td>
+                        <td>{{ session.virtual_address|default:"-" }}</td>
+                        <td class="usage-cell">{{ session.bytes_sent|filesizeformat }}</td>
+                        <td class="usage-cell">{{ session.bytes_received|filesizeformat }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         {% else %}
         <div class="empty-state">
             <p>No connection sessions recorded for this account.</p>

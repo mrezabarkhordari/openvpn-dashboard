@@ -10,6 +10,9 @@ ovpn-configs/
 *.ovpn
 *.img
 
+# Node (Tailwind build)
+node_modules/
+
 # Python
 .venv/
 venv/

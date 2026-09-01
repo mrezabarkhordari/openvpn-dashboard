@@ -4,991 +4,6 @@
 
 {% block title %}Account List - OpenVPN Dashboard{% endblock %}
 
-{% block extra_css %}
-<style>
-    /* Page Layout */
-    .page-wrapper {
-        max-width: 1800px;
-        margin: 0 auto;
-        padding: 0 20px;
-    }
-
-    /* Content Card */
-    .content-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-md);
-        overflow-x: auto;
-        margin-bottom: 20px;
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--border-subtle);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .card-header h2 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--text-primary);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .card-header .icon {
-        font-size: 20px;
-    }
-
-    .card-header .badge {
-        padding: 3px 10px;
-        border-radius: 12px;
-        font-size: 11px;
-        font-weight: 600;
-        background: var(--primary-light);
-        color: var(--primary);
-    }
-
-    /* Stats Bar - Compact */
-    .stats-bar {
-        display: flex;
-        gap: 24px;
-        padding: 14px 20px;
-        background: var(--bg-surface);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-lg);
-        margin-bottom: 16px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-    .stat-item {
-        display: flex;
-        flex-direction: column;
-    }
-    .stat-label {
-        font-size: 11px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-        color: var(--text-muted);
-    }
-    .stat-value {
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-    .reset-all-btn {
-        margin-left: auto;
-    }
-    .reset-all-btn .button-del {
-        padding: 8px 14px;
-        font-size: 12px;
-    }
-
-    /* Compact Table Styles */
-    .accounts-table {
-        width: max-content;
-        min-width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-        table-layout: auto;
-    }
-
-    .accounts-table th {
-        text-align: left;
-        padding: 10px 12px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--text-muted);
-        border-bottom: 2px solid var(--border-default);
-        background: var(--bg-body);
-        white-space: nowrap;
-    }
-
-    .accounts-table td {
-        padding: 10px 12px;
-        border-bottom: 1px solid var(--border-subtle);
-        vertical-align: middle;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .accounts-table tr:last-child td {
-        border-bottom: none;
-    }
-
-    .accounts-table tr:hover td {
-        background: var(--bg-hover);
-    }
-    .accounts-table tbody tr:hover {
-        position: relative;
-        z-index: 4;
-    }
-
-    /* Remaining days — count only; full date is on title hover */
-    .remaining-days {
-        font-variant-numeric: tabular-nums;
-        color: var(--text-primary);
-        white-space: nowrap;
-    }
-    .remaining-days.is-expired {
-        color: var(--danger);
-        font-weight: 600;
-        background: transparent;
-    }
-
-    .connection-text {
-        font-size: 10px;
-        font-weight: 500;
-        color: var(--text-muted);
-        margin-right: 4px;
-        vertical-align: middle;
-    }
-    .connection-text.on {
-        color: var(--success);
-    }
-
-
-    /* Usage Cell */
-    .usage-cell {
-        font-family: monospace;
-        font-size: 12px;
-        text-align: right;
-        white-space: nowrap;
-        color: var(--text-secondary);
-    }
-    .usage-total-value {
-        font-weight: 600;
-        color: var(--info);
-    }
-
-    /* Column widths: Account, User, Days, Enabled, Download, Upload, Total, Actions */
-    .accounts-table th:nth-child(1),
-    .accounts-table td:nth-child(1) {
-        width: 110px; /* Account */
-        max-width: 160px;
-    }
-    .accounts-table th:nth-child(2),
-    .accounts-table td:nth-child(2) {
-        width: 90px; /* User */
-        max-width: 140px;
-        white-space: nowrap;
-    }
-    .accounts-table th:nth-child(3),
-    .accounts-table td:nth-child(3) {
-        width: 56px; /* Days */
-        white-space: nowrap;
-    }
-    .accounts-table th:nth-child(4),
-    .accounts-table td:nth-child(4) {
-        width: 80px; /* Enabled */
-        white-space: nowrap;
-        overflow: visible;
-    }
-    .accounts-table th:nth-child(5),
-    .accounts-table td:nth-child(5) {
-        width: 72px; /* Download */
-        white-space: nowrap;
-    }
-    .accounts-table th:nth-child(6),
-    .accounts-table td:nth-child(6) {
-        width: 72px; /* Upload */
-        white-space: nowrap;
-    }
-    .accounts-table th:nth-child(7),
-    .accounts-table td:nth-child(7) {
-        width: 72px; /* Total */
-        white-space: nowrap;
-    }
-    .accounts-table th:nth-child(8),
-    .accounts-table td:nth-child(8) {
-        width: 1%;
-        min-width: 720px;
-        white-space: nowrap;
-        overflow: visible;
-    }
-
-    /* Custom Modal Styles */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(4px);
-        z-index: 1000;
-        justify-content: center;
-        align-items: center;
-        animation: fadeIn 0.2s ease;
-    }
-    .modal-overlay.active {
-        display: flex;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    @keyframes slideIn {
-        from { transform: translateY(-20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
-    .modal-content {
-        background: var(--bg-surface, #ffffff);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-lg, 12px);
-        padding: 24px;
-        max-width: 420px;
-        width: 90%;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: slideIn 0.25s ease;
-    }
-    .modal-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-    .modal-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        flex-shrink: 0;
-    }
-    .modal-icon.danger {
-        background: rgba(220, 53, 69, 0.15);
-        color: #dc3545;
-    }
-    .modal-icon.warning {
-        background: rgba(180, 83, 9, 0.15);
-        color: #b45309;
-    }
-    .modal-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1f2937;
-        margin: 0;
-    }
-    [data-theme="dark"] .modal-title {
-        color: #f3f4f6;
-    }
-    .modal-body {
-        color: #4b5563;
-        font-size: 14px;
-        line-height: 1.6;
-        margin-bottom: 24px;
-    }
-    [data-theme="dark"] .modal-body {
-        color: #9ca3af;
-    }
-    .modal-body strong {
-        color: #1f2937;
-    }
-    [data-theme="dark"] .modal-body strong {
-        color: #f3f4f6;
-    }
-    .modal-footer {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-    }
-    .modal-btn {
-        padding: 10px 20px;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        border: none;
-    }
-    .modal-btn-cancel {
-        background: var(--bg-hover);
-        color: var(--text-primary);
-        border: 1px solid var(--border-default);
-    }
-    .modal-btn-cancel:hover {
-        background: var(--bg-active);
-        border-color: var(--border-strong);
-    }
-    .modal-btn-danger {
-        background: var(--danger);
-        color: var(--text-inverse);
-    }
-    .modal-btn-danger:hover {
-        background: var(--danger);
-        opacity: 0.9;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-    }
-    .modal-btn-warning {
-        background: var(--warning);
-        color: var(--warning-text);
-    }
-    .modal-btn-warning:hover {
-        background: var(--warning);
-        opacity: 0.9;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(234, 179, 8, 0.3);
-    }
-
-    /* Toast Notification */
-    .toast-container {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 1001;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .toast {
-        padding: 12px 20px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    @keyframes toastIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes toastOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-    .toast-success {
-        background: var(--success);
-        color: #fff;
-    }
-    .toast-error {
-        background: var(--danger);
-        color: #fff;
-    }
-    
-    /* Sortable column styling */
-    .accounts-table th.sortable {
-        user-select: none;
-        position: relative;
-        padding-right: 20px;
-        cursor: pointer;
-    }
-    .accounts-table th.sortable:hover {
-        background-color: var(--bg-active);
-    }
-    .sort-icon {
-        position: absolute;
-        right: 4px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 10px;
-        opacity: 0.3;
-        transition: opacity var(--transition-fast);
-    }
-    .sort-icon::after {
-        content: "⇅";
-    }
-    .accounts-table th.sortable:hover .sort-icon {
-        opacity: 0.6;
-    }
-    .accounts-table th.sort-asc .sort-icon,
-    .accounts-table th.sort-desc .sort-icon {
-        opacity: 1;
-    }
-    .accounts-table th.sort-asc .sort-icon::after {
-        content: "↑";
-    }
-    .accounts-table th.sort-desc .sort-icon::after {
-        content: "↓";
-    }
-
-    /* Clickable link styling (user name, account number) */
-    .clickable-link {
-        color: var(--text-primary);
-        text-decoration: none;
-        font-weight: 600;
-        padding: 2px 6px;
-        margin: -2px -6px;
-        border-radius: var(--radius-sm);
-        transition: all var(--transition-fast);
-        display: inline-block;
-    }
-    .clickable-link:visited {
-        color: var(--text-primary);
-    }
-    .clickable-link:hover {
-        color: var(--primary);
-        background-color: var(--primary-light);
-        text-decoration: none;
-    }
-
-    /* Connection indicator (green flashing dot when account.is_connected) */
-    .connection-indicator {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--text-muted);
-        display: inline-block;
-        vertical-align: middle;
-        margin-right: 6px;
-        flex-shrink: 0;
-    }
-
-    .connection-indicator.online {
-        background: var(--success);
-        box-shadow: 0 0 6px var(--success);
-        animation: connectionPulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes connectionPulse {
-        0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--success); }
-        50% { opacity: 0.4; box-shadow: 0 0 12px var(--success); }
-    }
-
-    /* Status Toggle (clickable status badge) */
-    .status-toggle {
-        position: relative;
-        cursor: pointer;
-        user-select: none;
-        transition: all 0.2s ease;
-        display: inline-block;
-        z-index: 1;
-    }
-    .status-toggle:hover {
-        z-index: 20;
-    }
-    .status-toggle:active {
-        transform: scale(0.95);
-    }
-    .status-toggle.disabled-click {
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-    .status-toggle.disabled-click:hover {
-        transform: none;
-    }
-    .status-toggle.loading .status-badge {
-        animation: pulse 1s infinite;
-    }
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 10px;
-        border-radius: 14px;
-        font-size: 11px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-    .status-badge.active {
-        background: var(--primary-light);
-        color: var(--primary);
-        border: 1px solid var(--primary);
-    }
-    .status-badge.disabled {
-        background: var(--bg-hover);
-        color: var(--text-muted);
-        border: 1px solid var(--border-default);
-    }
-    .status-badge.expired {
-        background: transparent;
-        color: var(--danger);
-        border: 1px solid transparent;
-        font-weight: 600;
-    }
-    .status-toggle .toggle-hint {
-        position: absolute;
-        bottom: calc(100% + 6px);
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--bg-elevated);
-        color: var(--text-primary);
-        padding: 4px 8px;
-        border-radius: var(--radius-sm);
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 1.3;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--border-default);
-        z-index: 30;
-    }
-    .status-toggle:hover .toggle-hint {
-        opacity: 1;
-    }
-    .status-toggle.disabled-click .toggle-hint {
-        display: none;
-    }
-
-    /* Action Buttons — match user_update.html (compact icon + label, one row) */
-    .action-buttons {
-        display: flex;
-        flex-wrap: nowrap;
-        gap: 4px;
-        white-space: nowrap;
-        align-items: center;
-    }
-
-    .action-btn {
-        padding: 4px 8px;
-        border-radius: var(--radius-md);
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        border: none;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        white-space: nowrap;
-        position: relative;
-        gap: 4px;
-    }
-
-    .action-btn .btn-text {
-        display: inline;
-    }
-
-    /* Tooltip on hover */
-    .action-btn::after {
-        content: attr(title);
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--bg-elevated);
-        color: var(--text-primary);
-        padding: 4px 8px;
-        border-radius: var(--radius-sm);
-        font-size: 11px;
-        white-space: nowrap;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease;
-        box-shadow: var(--shadow-sm);
-        margin-bottom: 4px;
-        z-index: 10;
-    }
-
-    .action-btn:hover::after {
-        opacity: 1;
-    }
-
-    .action-btn-edit {
-        background: var(--primary-light);
-        color: var(--primary);
-    }
-
-    .action-btn-edit:hover {
-        background: var(--primary);
-        color: white;
-        text-decoration: none;
-    }
-
-    .action-btn-download {
-        background: var(--info-bg);
-        color: var(--info);
-    }
-
-    .action-btn-download:hover {
-        background: var(--info);
-        color: white;
-        text-decoration: none;
-    }
-
-    .action-btn-reset {
-        background: var(--warning-bg, #fef3c7);
-        color: var(--warning, #d97706);
-    }
-
-    .action-btn-reset:hover {
-        background: var(--warning, #d97706);
-        color: white;
-        text-decoration: none;
-    }
-
-    .action-btn-delete {
-        background: var(--danger-bg, #fee2e2);
-        color: var(--danger, #dc2626);
-    }
-
-    .action-btn-delete:hover {
-        background: var(--danger, #dc2626);
-        color: white;
-        text-decoration: none;
-    }
-
-    .action-btn-sessions {
-        background: var(--primary-light, #e0e7ff);
-        color: var(--primary, #4338ca);
-    }
-
-    .action-btn-sessions:hover {
-        background: var(--primary, #4338ca);
-        color: white;
-        text-decoration: none;
-    }
-
-    .action-btn-activate {
-        background: var(--success-bg, #dcfce7);
-        color: var(--success, #16a34a);
-    }
-
-    .action-btn-activate:hover {
-        background: var(--success, #16a34a);
-        color: white;
-        text-decoration: none;
-    }
-
-    .action-btn-deactivate {
-        background: var(--warning-bg, #fef3c7);
-        color: var(--warning, #d97706);
-    }
-
-    .action-btn-deactivate:hover {
-        background: var(--warning, #d97706);
-        color: white;
-        text-decoration: none;
-    }
-
-    .action-btn:disabled,
-    button.action-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    /* Tablet Responsive */
-    @media (max-width: 1200px) {
-        .page-wrapper {
-            padding: 0 16px;
-        }
-        
-        /* Hide Total usage on tablet to save space */
-        .accounts-table th:nth-child(7),
-        .accounts-table td:nth-child(7) {
-            display: none;
-        }
-    }
-
-    /* Mobile Responsive */
-    @media (max-width: 992px) {
-        .page-wrapper {
-            padding: 0 12px;
-        }
-        
-        .header {
-            flex-direction: column;
-            gap: 12px;
-            padding: 16px 0;
-        }
-        
-        .header-right {
-            flex-direction: column;
-            width: 100%;
-            gap: 12px;
-        }
-        
-        .server-settings-inline {
-            flex-direction: column;
-            width: 100%;
-            gap: 10px;
-        }
-        
-        .server-field {
-            width: 100%;
-        }
-        
-        .server-field-input-wrapper.url-field,
-        .server-field-input-wrapper.port-field,
-        .server-field-input-wrapper.refresh-field {
-            width: 100%;
-        }
-        
-        .buttons {
-            width: 100%;
-            flex-wrap: wrap;
-        }
-        
-        .buttons .button-4 {
-            flex: 1;
-            min-width: 100px;
-            text-align: center;
-            justify-content: center;
-        }
-        
-        /* Hide Upload/Download columns */
-        .accounts-table th:nth-child(5),
-        .accounts-table td:nth-child(5),
-        .accounts-table th:nth-child(6),
-        .accounts-table td:nth-child(6) {
-            display: none;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .page-wrapper {
-            padding: 0;
-        }
-        
-        .header {
-            padding: 16px;
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border-subtle);
-            margin-bottom: 0;
-        }
-        
-        .stats-bar {
-            border-radius: 0;
-            border-left: none;
-            border-right: none;
-            margin-bottom: 0;
-        }
-        
-        .content-card {
-            border-radius: 0;
-            border-left: none;
-            border-right: none;
-            margin-bottom: 0;
-        }
-        
-        .stat-item {
-            min-width: 70px;
-        }
-        
-        .reset-all-btn {
-            width: 100%;
-            margin-left: 0;
-            margin-top: 8px;
-        }
-        
-        .reset-all-btn .button-del {
-            width: 100%;
-        }
-        
-        /* Table mobile */
-        .accounts-table {
-            font-size: 12px;
-        }
-        
-        .accounts-table th,
-        .accounts-table td {
-            padding: 8px 8px;
-        }
-        
-        .status-badge {
-            font-size: 10px;
-            padding: 3px 8px;
-        }
-        
-        .status-toggle .toggle-hint {
-            display: none;
-        }
-        
-        .action-buttons {
-            flex-wrap: nowrap;
-            gap: 3px;
-        }
-        
-        /* Hide Total Usage (7th); keep User (2nd) and Actions (8th) */
-        .accounts-table th:nth-child(7),
-        .accounts-table td:nth-child(7) {
-            display: none;
-        }
-        
-        .clickable-link {
-            font-size: 12px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .stats-bar {
-            padding: 12px;
-            gap: 10px;
-        }
-        
-        .stat-value {
-            font-size: 16px;
-        }
-        
-        .stat-label {
-            font-size: 10px;
-        }
-        
-        .accounts-table th,
-        .accounts-table td {
-            padding: 6px 4px;
-        }
-        
-        .action-buttons {
-            flex-wrap: nowrap;
-            gap: 2px;
-        }
-    }
-
-    /* Header right section */
-    .header-right {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-    
-    /* Server Settings Inline Styles */
-    .server-settings-inline {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-    .server-field {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .server-field-label {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--text-secondary);
-        white-space: nowrap;
-    }
-    .server-field-input-wrapper {
-        position: relative;
-    }
-    .server-field-input-wrapper.url-field {
-        width: 240px;
-    }
-    .server-field-input-wrapper.port-field {
-        width: 90px;
-    }
-    .server-field-input-wrapper.refresh-field {
-        width: 100px;
-    }
-    .server-field-input {
-        width: 100%;
-        padding: 8px 32px 8px 12px;
-        font-size: 14px;
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-sm);
-        background: var(--bg-base);
-        color: var(--text-primary);
-        transition: all 0.2s ease;
-    }
-    .server-field-input::placeholder {
-        color: var(--text-muted);
-        font-size: 13px;
-    }
-    .server-field-input:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 2px var(--primary-light);
-    }
-    .server-field-input.modified {
-        border-color: #f59e0b;
-        background: rgba(245, 158, 11, 0.05);
-    }
-    .server-field-input.saving {
-        border-color: var(--primary);
-        background: rgba(59, 130, 246, 0.05);
-    }
-    .server-field-input.saved {
-        border-color: var(--success);
-        background: rgba(34, 197, 94, 0.05);
-    }
-    .server-field-input.error {
-        border-color: var(--danger);
-        background: rgba(239, 68, 68, 0.05);
-    }
-    .server-field-indicator {
-        position: absolute;
-        right: 10px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 14px;
-        opacity: 0;
-        transition: all 0.2s ease;
-        pointer-events: none;
-    }
-    .server-field-indicator.show {
-        opacity: 1;
-    }
-    .server-field-indicator.spin {
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        from { transform: translateY(-50%) rotate(0deg); }
-        to { transform: translateY(-50%) rotate(360deg); }
-    }
-    .server-field-hint {
-        opacity: 0;
-        transition: opacity 0.2s ease;
-    }
-    .server-field-hint.show {
-        opacity: 1;
-    }
-    .server-field-hint kbd {
-        display: inline-block;
-        padding: 3px 6px;
-        font-size: 10px;
-        font-family: inherit;
-        font-weight: 600;
-        line-height: 1;
-        color: var(--text-muted);
-        background: var(--bg-active);
-        border: 1px solid var(--border-default);
-        border-radius: 3px;
-        box-shadow: 0 1px 1px rgba(0,0,0,0.08);
-    }
-    .server-field-select {
-        width: 100%;
-        padding: 8px 28px 8px 12px;
-        font-size: 14px;
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-sm);
-        background-color: var(--bg-base);
-        color: var(--text-primary);
-        cursor: pointer;
-        appearance: none;
-        -webkit-appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        transition: all 0.2s ease;
-    }
-    .server-field-select:hover {
-        border-color: var(--border-strong);
-    }
-    .server-field-select:focus {
-        outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 2px var(--primary-light);
-    }
-</style>
-{% endblock %}
-
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -1051,7 +66,7 @@
     }
 
     function findAccountRow(accountNumber) {
-        return $('tr[data-account-number="' + accountNumber + '"]');
+        return $('.account-group[data-account-number="' + accountNumber + '"]');
     }
 
     function syncAccountRowStatus(accountNumber, status) {
@@ -1066,6 +81,7 @@
         var $deactivate = $row.find('.action-btn-deactivate');
         $row.removeClass('active disable expired');
         $row.attr('data-account-status', status);
+        $row.find('.account-row').attr('data-account-status', status);
         $badge.removeClass('active disabled expired');
 
         if (status === 'active') {
@@ -1174,10 +190,10 @@
                     data: { csrfmiddlewaretoken: "{{ csrf_token }}" },
                     success: function(data) {
                         if (data.success) {
-                            var row = $('button.action-btn-reset[data-account-id="' + accountId + '"]').closest('tr');
-                            row.find('.usage-sent').text('0 B');
-                            row.find('.usage-received').text('0 B');
-                            row.find('.usage-total-value').text('0 B');
+                            var group = $('button.action-btn-reset[data-account-id="' + accountId + '"]').closest('.account-group');
+                            group.find('.usage-sent').text('0 B');
+                            group.find('.usage-received').text('0 B');
+                            group.find('.usage-total-value').text('0 B');
                             showToast('Usage reset for ' + accountName);
                         } else {
                             showToast(data.message, 'error');
@@ -1511,19 +527,6 @@
         });
         
         
-        // Modal button handlers
-        $('#modal-cancel-btn').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            closeModal();
-        });
-        
-        $('#modal-confirm-btn').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            confirmModal();
-        });
-        
         // Close modal on overlay click
         $('#confirm-modal').on('click', function(e) {
             if (e.target === this) {
@@ -1606,11 +609,9 @@
     }
     
     function sortTable(n) {
-        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-        table = document.getElementById("accountTable");
-        switching = true;
-        
-        // Determine sort direction
+        var table = document.getElementById("accountTable");
+        var groups = Array.prototype.slice.call(table.querySelectorAll('tbody.account-group'));
+        var dir;
         if (currentSortCol === n) {
             dir = currentSortDir === "asc" ? "desc" : "asc";
         } else {
@@ -1618,53 +619,29 @@
         }
         currentSortCol = n;
         currentSortDir = dir;
-        
-        // Update sort icons
         updateSortIcons(n, dir);
-        
-        // Check if this is a usage column (Download=4, Upload=5, Total=6)
+
         var isUsageColumn = (n === 4 || n === 5 || n === 6);
-        
-        while (switching) {
-            switching = false;
-            rows = table.rows;
-            for (i = 1; i < (rows.length - 1); i++) {
-                shouldSwitch = false;
-                x = rows[i].getElementsByTagName("TD")[n];
-                y = rows[i + 1].getElementsByTagName("TD")[n];
-                
-                var xVal, yVal;
-                
-                if (isUsageColumn) {
-                    // For usage columns, parse the byte values and compare numerically
-                    var xText = (x.textContent || x.innerText).trim();
-                    var yText = (y.textContent || y.innerText).trim();
-                    xVal = parseBytesToNumber(xText);
-                    yVal = parseBytesToNumber(yText);
-                } else {
-                    // For other columns, use string comparison
-                    xVal = (x.textContent || x.innerText).toLowerCase().trim();
-                    yVal = (y.textContent || y.innerText).toLowerCase().trim();
-                }
-                
-                if (dir == "asc") {
-                    if (xVal > yVal) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                } else if (dir == "desc") {
-                    if (xVal < yVal) {
-                        shouldSwitch = true;
-                        break;
-                    }
-                }
+
+        groups.sort(function(a, b) {
+            var x = a.querySelector('.account-row').cells[n];
+            var y = b.querySelector('.account-row').cells[n];
+            var xVal, yVal;
+            if (isUsageColumn) {
+                xVal = parseBytesToNumber((x.textContent || x.innerText).trim());
+                yVal = parseBytesToNumber((y.textContent || y.innerText).trim());
+            } else {
+                xVal = (x.textContent || x.innerText).toLowerCase().trim();
+                yVal = (y.textContent || y.innerText).toLowerCase().trim();
             }
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
-                switchcount++;
-            }
-        }
+            if (xVal < yVal) return dir === "asc" ? -1 : 1;
+            if (xVal > yVal) return dir === "asc" ? 1 : -1;
+            return 0;
+        });
+
+        groups.forEach(function(group) {
+            table.appendChild(group);
+        });
     }
     
     function updateSortIcons(activeCol, dir) {
@@ -1683,167 +660,162 @@
 
 {% block content %}
 <div class="page-wrapper">
-    <div class="header">
-        <h1>Account List</h1>
-        <div class="header-right">
-            <!-- Server Settings inline -->
-            <div class="server-settings-inline">
-                <div class="server-field">
-                    <label for="server-url-input" class="server-field-label">🌐 Server:</label>
-                    <div class="server-field-input-wrapper url-field">
-                        <input type="text" id="server-url-input" class="server-field-input" value="{{ server_url }}" placeholder="vpn.example.com" data-original="{{ server_url }}">
-                        <span id="server-url-indicator" class="server-field-indicator"></span>
-                    </div>
-                </div>
-                <div class="server-field">
-                    <label for="server-port-input" class="server-field-label">Port:</label>
-                    <div class="server-field-input-wrapper port-field">
-                        <input type="text" id="server-port-input" class="server-field-input" value="{{ server_port }}" placeholder="443" data-original="{{ server_port }}">
-                        <span id="server-port-indicator" class="server-field-indicator"></span>
-                    </div>
-                </div>
-                <span id="server-settings-hint" class="server-field-hint"><kbd>↵</kbd></span>
-                <div class="server-field">
-                    <label for="auto-refresh-interval" class="server-field-label">Auto-refresh:</label>
-                    <div class="server-field-input-wrapper refresh-field">
-                        <select id="auto-refresh-interval" class="server-field-select" title="Refresh interval">
-                            <option value="off">Off</option>
-                            <option value="5000">5s</option>
-                            <option value="10000">10s</option>
-                            <option value="30000">30s</option>
-                            <option value="60000">60s</option>
-                        </select>
-                    </div>
+    <div class="page-header">
+        <h1>Accounts</h1>
+        <div class="page-header-actions">
+            <div class="server-field">
+                <label for="server-url-input" class="server-field-label">Server</label>
+                <div class="server-field-input-wrapper url-field">
+                    <input type="text" id="server-url-input" class="server-field-input" value="{{ server_url }}" placeholder="vpn.example.com" data-original="{{ server_url }}">
+                    <span id="server-url-indicator" class="server-field-indicator"></span>
                 </div>
             </div>
-            <div class="buttons">
-                <a href="{% url 'user_list' %}" class="button-4">User Management</a>
-                <a href="{% url 'account_create' %}?next={% url 'account_list' %}" class="button-4">+ New Account</a>
+            <div class="server-field">
+                <label for="server-port-input" class="server-field-label">Port</label>
+                <div class="server-field-input-wrapper port-field">
+                    <input type="text" id="server-port-input" class="server-field-input" value="{{ server_port }}" placeholder="443" data-original="{{ server_port }}">
+                    <span id="server-port-indicator" class="server-field-indicator"></span>
+                </div>
             </div>
+            <span id="server-settings-hint" class="server-field-hint"><kbd>↵</kbd></span>
+            <div class="server-field">
+                <label for="auto-refresh-interval" class="server-field-label">Refresh</label>
+                <div class="server-field-input-wrapper refresh-field">
+                    <select id="auto-refresh-interval" class="server-field-select" title="Refresh interval">
+                        <option value="off">Off</option>
+                        <option value="5000">5s</option>
+                        <option value="10000">10s</option>
+                        <option value="30000">30s</option>
+                        <option value="60000">60s</option>
+                    </select>
+                </div>
+            </div>
+            <a href="{% url 'account_create' %}?next={% url 'account_list' %}" class="btn btn-primary">
+                <i data-lucide="plus" class="h-4 w-4"></i> New Account
+            </a>
         </div>
     </div>
 
-    <!-- Stats Bar -->
-    <div class="stats-bar">
-        <div class="stat-item">
-            <span class="stat-label">Total Accounts</span>
-            <span class="stat-value">{{ usage_stats.total_accounts }}</span>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total Accounts</div>
+            <div class="stat-value">{{ usage_stats.total_accounts }}</div>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Active Sessions</span>
-            <span class="stat-value">{{ usage_stats.active_sessions }}</span>
+        <div class="stat-card">
+            <div class="stat-label">Active Sessions</div>
+            <div class="stat-value">{{ usage_stats.active_sessions }}</div>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Today's Sessions</span>
-            <span class="stat-value">{{ usage_stats.today_sessions }}</span>
+        <div class="stat-card">
+            <div class="stat-label">Today's Sessions</div>
+            <div class="stat-value">{{ usage_stats.today_sessions }}</div>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Today Download</span>
-            <span class="stat-value">{{ usage_stats.last_24h_sent }}</span>
+        <div class="stat-card">
+            <div class="stat-label">Today Download</div>
+            <div class="stat-value">{{ usage_stats.last_24h_sent }}</div>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Today Upload</span>
-            <span class="stat-value">{{ usage_stats.last_24h_received }}</span>
+        <div class="stat-card">
+            <div class="stat-label">Today Upload</div>
+            <div class="stat-value">{{ usage_stats.last_24h_received }}</div>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Today Total</span>
-            <span class="stat-value">{{ usage_stats.last_24h_total }}</span>
+        <div class="stat-card">
+            <div class="stat-label">Today Total</div>
+            <div class="stat-value">{{ usage_stats.last_24h_total }}</div>
         </div>
-        <div class="stat-item">
-            <span class="stat-label">Last usage</span>
-            <span class="stat-value">{{ last_usage_updated|date:"M d, H:i:s"|default:"—" }}</span>
-        </div>
-        <div class="reset-all-btn">
-            <button onclick="resetAllUsage()" class="button-del">🔄 Reset All Usage</button>
+        <div class="stat-card flex flex-col justify-between">
+            <div>
+                <div class="stat-label">Last usage</div>
+                <div class="stat-value text-sm">{{ last_usage_updated|date:"M d, H:i:s"|default:"—" }}</div>
+            </div>
+            <button type="button" onclick="resetAllUsage()" class="btn btn-outline btn-sm mt-2">Reset all usage</button>
         </div>
     </div>
 
-    <!-- Accounts Table Card -->
-    <div class="content-card">
+    <div class="card">
         <div class="card-header">
-            <h2><span class="icon">🔐</span> VPN Accounts <span class="badge">{{ accounts|length }}</span></h2>
+            <h2>
+                <i data-lucide="key-round" class="h-4 w-4"></i>
+                VPN Accounts
+                <span class="badge badge-primary">{{ accounts|length }}</span>
+            </h2>
         </div>
-        <table id="accountTable" class="accounts-table">
-            <thead>
-                <tr>
-                    <th onclick="sortTable(0)" class="sortable" data-col="0">Account <span class="sort-icon"></span></th>
-                    <th onclick="sortTable(1)" class="sortable" data-col="1">User <span class="sort-icon"></span></th>
-                    <th onclick="sortTable(2)" class="sortable" data-col="2">Days <span class="sort-icon"></span></th>
-                    <th onclick="sortTable(3)" class="sortable" data-col="3">Enabled <span class="sort-icon"></span></th>
-                    <th onclick="sortTable(4)" class="sortable" data-col="4">Download <span class="sort-icon"></span></th>
-                    <th onclick="sortTable(5)" class="sortable" data-col="5">Upload <span class="sort-icon"></span></th>
-                    <th onclick="sortTable(6)" class="sortable" data-col="6">Total <span class="sort-icon"></span></th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for account in accounts %}
-                {% with an=account.account_number %}
-                <tr data-account-number="{{ account.account_number }}" data-account-status="{{ account.status }}">
-                    <td>
-                      <span class="connection-indicator {% if account.is_connected %}online{% endif %}" title="{% if account.is_connected %}Connected{% else %}Offline{% endif %}"></span>
-                      <span class="connection-text {% if account.is_connected %}on{% endif %}">{% if account.is_connected %}On{% else %}Off{% endif %}</span>
-                      <a href="{% url 'account_update' account.id %}?next={% url 'account_list' %}" class="clickable-link">{{ account.account_number }}</a>
-                    </td>
-                    <td><a href="{% url 'user_update' account.user.id %}" class="clickable-link">{{ account.user.name }}</a></td>
-                    <td class="remaining-days{% if account.days_until_expiration <= 0 %} is-expired{% endif %}" title="{{ account.expiration_date }}">{% if account.days_until_expiration <= 0 %}Expired{% else %}{{ account.days_until_expiration }}d{% endif %}</td>
-                    <td>
-                        <div class="status-toggle {% if account.days_until_expiration <= 0 or account.status == 'expired' %}disabled-click{% endif %}" 
-                             onclick="toggleAccountStatus(this, '{{ account.account_number }}', '{{ account.status }}')">
-                            <span class="status-badge {% if account.days_until_expiration <= 0 or account.status == 'expired' %}expired{% elif account.status == 'active' %}active{% else %}disabled{% endif %}">
-                                {% if account.days_until_expiration <= 0 or account.status == 'expired' %}Expired{% elif account.status == 'active' %}Active{% else %}Disabled{% endif %}
-                            </span>
-                            <span class="toggle-hint">
-                                {% if account.days_until_expiration <= 0 or account.status == 'expired' %}Expired{% elif account.status == 'active' %}Click to deactivate{% else %}Click to activate{% endif %}
-                            </span>
-                        </div>
-                    </td>
-                    <td class="usage-cell">
-                        <span class="usage-received">{{ account.total_bytes_sent_human }}</span>
-                    </td>
-                    <td class="usage-cell">
-                        <span class="usage-sent">{{ account.total_bytes_received_human }}</span>
-                    </td>
-                    <td class="usage-cell"{% if account.usage_last_updated %} title="Last updated: {{ account.usage_last_updated|date:'M d, H:i:s' }}"{% endif %}>
-                        <span class="usage-total-value">{{ account.total_usage_human }}</span>
-                    </td>
-                    <td>
-                        <div class="action-buttons">
-                            <button type="button" class="action-btn action-btn-activate" {% if account.status != 'disabled' %}disabled{% endif %} onclick="updateStatus('{{ account.account_number }}', 'activate')">Activate</button>
-                            <button type="button" class="action-btn action-btn-deactivate" {% if account.status != 'active' %}disabled{% endif %} onclick="updateStatus('{{ account.account_number }}', 'deactivate')">Deactivate</button>
-                            <a href="{% url 'account_update' account.id %}?next={% url 'account_list' %}" class="action-btn action-btn-edit" title="Edit">✏️ Edit</a>
-                            <button type="button" class="action-btn action-btn-download" onclick="downloadConfig('{{ account.account_number }}')" title="Download Config">📥 Download</button>
-                            <a href="{% url 'account_sessions' account.id %}" class="action-btn action-btn-sessions" title="Sessions">📋 Sessions</a>
-                            <button type="button" class="action-btn action-btn-reset" data-account-id="{{ account.id }}" onclick="resetUsage({{ account.id }}, '{{ account.account_number }}')" title="Reset Usage">↺ Reset</button>
-                            <button type="button" class="action-btn action-btn-delete" onclick="confirmDelete('{{ account.account_number }}', '{{ account.id }}')" title="Delete">🗑️ Delete</button>
-                            <form id="delete-form-{{ account.id }}" method="post" action="{% url 'account_delete' account.id %}" style="display: none;">{% csrf_token %}</form>
-                        </div>
-                    </td>
-                </tr>
-                {% endwith %}
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="table-wrap">
+            <table id="accountTable" class="data-table">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)" class="sortable" data-col="0">Account <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(1)" class="sortable" data-col="1">User <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(2)" class="sortable" data-col="2">Days <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(3)" class="sortable" data-col="3">Enabled <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(4)" class="sortable" data-col="4">Download <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(5)" class="sortable" data-col="5">Upload <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(6)" class="sortable" data-col="6">Total <span class="sort-icon"></span></th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                    {% for account in accounts %}
+                    <tbody class="account-group" data-account-number="{{ account.account_number }}" data-account-status="{{ account.status }}">
+                    <tr data-account-number="{{ account.account_number }}" data-account-status="{{ account.status }}" data-href="{% url 'account_update' account.id %}?next={% url 'account_list' %}" class="account-row clickable-row">
+                        <td>
+                            <span class="connection-indicator {% if account.is_connected %}online{% endif %}" title="{% if account.is_connected %}Connected{% else %}Offline{% endif %}"></span>
+                            <span class="connection-text {% if account.is_connected %}on{% endif %}">{% if account.is_connected %}On{% else %}Off{% endif %}</span>
+                            <a href="{% url 'account_update' account.id %}?next={% url 'account_list' %}" class="clickable-link">{{ account.account_number }}</a>
+                        </td>
+                        <td><a href="{% url 'user_update' account.user.id %}" class="clickable-link">{{ account.user.name }}</a></td>
+                        <td class="remaining-days{% if account.days_until_expiration <= 0 %} is-expired{% endif %}" title="{{ account.expiration_date }}">{% if account.days_until_expiration <= 0 %}Expired{% else %}{{ account.days_until_expiration }}d{% endif %}</td>
+                        <td>
+                            <div class="status-toggle {% if account.days_until_expiration <= 0 or account.status == 'expired' %}disabled-click{% endif %}"
+                                 onclick="toggleAccountStatus(this, '{{ account.account_number }}', '{{ account.status }}')">
+                                <span class="status-badge {% if account.days_until_expiration <= 0 or account.status == 'expired' %}expired{% elif account.status == 'active' %}active{% else %}disabled{% endif %}">
+                                    {% if account.days_until_expiration <= 0 or account.status == 'expired' %}Expired{% elif account.status == 'active' %}Active{% else %}Disabled{% endif %}
+                                </span>
+                                <span class="toggle-hint">
+                                    {% if account.days_until_expiration <= 0 or account.status == 'expired' %}Expired{% elif account.status == 'active' %}Click to deactivate{% else %}Click to activate{% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="usage-cell">
+                            <span class="usage-received">{{ account.total_bytes_sent_human }}</span>
+                        </td>
+                        <td class="usage-cell">
+                            <span class="usage-sent">{{ account.total_bytes_received_human }}</span>
+                        </td>
+                        <td class="usage-cell"{% if account.usage_last_updated %} title="Last updated: {{ account.usage_last_updated|date:'M d, H:i:s' }}"{% endif %}>
+                            <span class="usage-total-value">{{ account.total_usage_human }}</span>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="downloadConfig('{{ account.account_number }}')" title="Download Config">
+                                    <i data-lucide="download" class="h-3.5 w-3.5"></i> Download
+                                </button>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="showConfigQr('{{ account.account_number }}')" title="Show QR code">
+                                    <i data-lucide="qr-code" class="h-3.5 w-3.5"></i> QR
+                                </button>
+                                <button type="button" class="btn btn-ghost btn-sm action-drawer-trigger" aria-expanded="false" aria-label="More actions">
+                                    Actions <i data-lucide="chevron-down" class="h-4 w-4 drawer-chevron"></i>
+                                </button>
+                                <form id="delete-form-{{ account.id }}" method="post" action="{% url 'account_delete' account.id %}" class="hidden">{% csrf_token %}</form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="action-drawer-row">
+                        <td colspan="8">
+                            <div class="action-drawer-panel">
+                                <button type="button" class="btn btn-outline btn-sm action-btn-activate" {% if account.status != 'disabled' %}disabled{% endif %} onclick="updateStatus('{{ account.account_number }}', 'activate')">Activate</button>
+                                <button type="button" class="btn btn-outline btn-sm action-btn-deactivate" {% if account.status != 'active' %}disabled{% endif %} onclick="updateStatus('{{ account.account_number }}', 'deactivate')">Deactivate</button>
+                                <a href="{% url 'account_update' account.id %}?next={% url 'account_list' %}" class="btn btn-outline btn-sm">Edit</a>
+                                <a href="{% url 'account_sessions' account.id %}" class="btn btn-outline btn-sm">Sessions</a>
+                                <button type="button" class="btn btn-outline btn-sm action-btn-reset" data-account-id="{{ account.id }}" onclick="resetUsage({{ account.id }}, '{{ account.account_number }}')">Reset usage</button>
+                                <button type="button" class="btn btn-outline btn-sm text-destructive" onclick="confirmDelete('{{ account.account_number }}', '{{ account.id }}')">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                    {% endfor %}
+            </table>
+        </div>
     </div>
 </div>
 
-<!-- Confirmation Modal -->
-<div id="confirm-modal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <div class="modal-icon danger">🗑</div>
-            <h3 class="modal-title">Confirm Action</h3>
-        </div>
-        <div class="modal-body">
-            Are you sure you want to proceed?
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="modal-btn modal-btn-cancel" id="modal-cancel-btn">Cancel</button>
-            <button type="button" class="modal-btn modal-btn-confirm modal-btn-danger" id="modal-confirm-btn">Confirm</button>
-        </div>
-    </div>
-</div>
-
-<!-- Toast Container -->
-<div id="toast-container" class="toast-container"></div>
+{% include 'openvpn_dashboard/partials/confirm_dialog.html' %}
+{% include 'openvpn_dashboard/partials/toast.html' %}
 {% endblock %}

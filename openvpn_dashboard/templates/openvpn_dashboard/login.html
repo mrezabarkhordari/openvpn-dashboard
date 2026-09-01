@@ -4,244 +4,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/theme.css' %}">
+    <link rel="stylesheet" href="{% static 'openvpn_dashboard/css/app.css' %}">
     <title>Login - OpenVPN Dashboard</title>
     <script>
         (function() {
             const saved = localStorage.getItem('theme');
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             if (saved === 'dark' || (!saved && prefersDark)) {
-                document.documentElement.setAttribute('data-theme', 'dark');
+                document.documentElement.classList.add('dark');
             }
         })();
     </script>
-    <style>
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, var(--bg-body) 0%, var(--bg-surface) 100%);
-        }
-
-        .login-card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-default);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            padding: 48px 40px;
-            width: 100%;
-            max-width: 420px;
-            margin: 20px;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .login-logo {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 16px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
-        }
-
-        .login-logo svg {
-            width: 36px;
-            height: 36px;
-            fill: white;
-        }
-
-        .login-header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0 0 8px 0;
-        }
-
-        .login-header p {
-            font-size: 14px;
-            color: var(--text-secondary);
-            margin: 0;
-        }
-
-        .login-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group label {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 15px;
-            border: 1px solid var(--input-border);
-            border-radius: var(--radius-md);
-            background: var(--input-bg);
-            color: var(--text-primary);
-            transition: all var(--transition-fast);
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--input-focus-ring);
-        }
-
-        .form-group input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 14px 24px;
-            font-size: 15px;
-            font-weight: 600;
-            color: white;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
-            border: none;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            margin-top: 8px;
-        }
-
-        .login-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.4);
-            background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
-        }
-
-        .login-btn:active {
-            transform: translateY(0);
-        }
-
-        .error-message {
-            background: var(--danger-bg);
-            border: 1px solid var(--danger-border);
-            color: var(--danger-text);
-            padding: 12px 16px;
-            border-radius: var(--radius-md);
-            font-size: 14px;
-            text-align: center;
-        }
-
-
-            @media (max-width: 480px) {
-                .login-card {
-                    padding: 32px 20px;
-                    margin: 12px;
-                }
-                .login-header h1 { font-size: 20px; }
-            }
-
-            .security-note {
-            text-align: center;
-            margin-top: 24px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-subtle);
-        }
-
-        .security-note p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .security-note svg {
-            width: 14px;
-            height: 14px;
-            fill: var(--text-muted);
-        }
-    </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="login-logo">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-                    </svg>
+    <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="card w-full max-w-md p-8">
+            <div class="mb-8 text-center">
+                <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+                    <i data-lucide="shield" class="h-7 w-7"></i>
                 </div>
-                <h1>OpenVPN Dashboard</h1>
-                <p>Sign in to access the admin panel</p>
+                <h1 class="m-0 text-2xl font-semibold tracking-tight">OpenVPN Dashboard</h1>
+                <p class="mt-2 mb-0 text-sm text-muted-foreground">Sign in to access the admin panel</p>
             </div>
 
             {% if error %}
-            <div class="error-message">
+            <div class="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
                 {{ error }}
             </div>
             {% endif %}
 
-            <form method="post" class="login-form">
+            <form method="post" class="flex flex-col gap-4">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="input"
                         placeholder="Enter your username"
-                        required 
+                        required
                         autofocus
                     >
                 </div>
-
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="input"
                         placeholder="Enter your password"
                         required
                     >
                 </div>
-
-                <button type="submit" class="login-btn">
-                    Sign In
-                </button>
+                <button type="submit" class="btn btn-primary h-10 w-full mt-1">Sign In</button>
             </form>
 
-            <div class="security-note">
-                <p>
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                    </svg>
-                    Secure admin access only
-                </p>
+            <div class="mt-6 flex items-center justify-center gap-2 border-t border-border pt-6 text-xs text-muted-foreground">
+                <i data-lucide="lock" class="h-3.5 w-3.5"></i>
+                Secure admin access only
             </div>
         </div>
     </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script src="{% static 'openvpn_dashboard/js/theme.js' %}"></script>
+    <script>
+        if (window.lucide) lucide.createIcons();
+    </script>
 </body>
 </html>
-
-
-
-

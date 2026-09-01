@@ -6,8 +6,9 @@ This module provides the interface between Django views and the OpenVPN manager.
 import os
 import logging
 from typing import Optional, Dict, List
-from django.http import HttpResponse
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse, JsonResponse
 
 from config.config import get_openvpn_settings
 
@@ -255,67 +256,113 @@ def renew_openvpn_user(account: str, cert_days: Optional[int] = None) -> str:
         raise Exception(f"Failed to renew certificate: {e}")
 
 
+def _client_config_path(account_number: str) -> str:
+    """Return the on-disk path for an account's .ovpn file."""
+    return os.path.join(CONFIG_DIR, f"{account_number}.ovpn")
+
+
+def _config_not_found_response(request, account_number: str) -> HttpResponse:
+    message = (
+        f'Configuration file not found for account "{account_number}". '
+        'The .ovpn file may not have been generated yet.'
+    )
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': False, 'error': message}, status=404)
+    return HttpResponse("Configuration file not found", status=404)
+
+
+def _load_client_config_content(account_number: str) -> Optional[str]:
+    """
+    Read an account's .ovpn file and rewrite the remote line from dashboard settings.
+    Returns None if the file does not exist.
+    """
+    from openvpn_dashboard.models import Setting
+    import re
+
+    config_path = _client_config_path(account_number)
+    if not os.path.exists(config_path):
+        return None
+
+    with open(config_path, 'r') as file:
+        config_content = file.read()
+
+    server_url = Setting.get_value('server_url', '').strip()
+    server_port = Setting.get_value('server_port', '').strip()
+
+    if server_url or server_port:
+        remote_pattern = r'^remote\s+(\S+)\s+(\d+)(.*)$'
+
+        def replace_remote(match):
+            original_address = match.group(1)
+            original_port = match.group(2)
+            rest = match.group(3)
+            new_address = server_url if server_url else original_address
+            new_port = server_port if server_port else original_port
+            return f'remote {new_address} {new_port}{rest}'
+
+        config_content = re.sub(remote_pattern, replace_remote, config_content, flags=re.MULTILINE)
+
+    return config_content
+
+
 def get_openvpn_config(request, account_number: str) -> HttpResponse:
     """
     Download the OpenVPN configuration file for an account.
-    
+
     The config is modified on-the-fly to replace the server address and port
     with the values from settings (server_url and server_port).
-    
-    Args:
-        request: Django HTTP request.
-        account_number: The account number to get config for.
-    
-    Returns:
-        HttpResponse with the .ovpn file or JSON error for AJAX requests.
+
+    Pass ?import=1 to serve the profile inline with the OpenVPN Connect MIME type
+    so a phone can open the scanned URL directly in the VPN app.
     """
-    from django.http import JsonResponse
-    from openvpn_dashboard.models import Setting
-    import re
-    
+    config_content = _load_client_config_content(account_number)
+    if config_content is None:
+        return _config_not_found_response(request, account_number)
+
     config_filename = f"{account_number}.ovpn"
-    config_path = os.path.join(CONFIG_DIR, config_filename)
-    
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as file:
-            config_content = file.read()
-        
-        # Get server URL and port from settings
-        server_url = Setting.get_value('server_url', '').strip()
-        server_port = Setting.get_value('server_port', '').strip()
-        
-        # Replace the remote line if server_url or server_port is set
-        if server_url or server_port:
-            # Match the "remote <address> <port>" line
-            remote_pattern = r'^remote\s+(\S+)\s+(\d+)(.*)$'
-            
-            def replace_remote(match):
-                original_address = match.group(1)
-                original_port = match.group(2)
-                rest = match.group(3)  # Any trailing content (like protocol)
-                
-                # Use settings values if set, otherwise keep original
-                new_address = server_url if server_url else original_address
-                new_port = server_port if server_port else original_port
-                
-                return f'remote {new_address} {new_port}{rest}'
-            
-            config_content = re.sub(remote_pattern, replace_remote, config_content, flags=re.MULTILINE)
-        
+    as_profile = request.GET.get('import') == '1'
+    if as_profile:
         response = HttpResponse(
-            config_content.encode('utf-8'), 
-            content_type='application/octet-stream'
+            config_content.encode('utf-8'),
+            content_type='application/x-openvpn-profile',
         )
-        response['Content-Disposition'] = f'attachment; filename="{config_filename}"'
+        response['Content-Disposition'] = f'inline; filename="{config_filename}"'
         return response
-    else:
-        # Return JSON error for AJAX requests
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False,
-                'error': f'Configuration file not found for account "{account_number}". The .ovpn file may not have been generated yet.'
-            }, status=404)
-        return HttpResponse("Configuration file not found", status=404)
+
+    response = HttpResponse(
+        config_content.encode('utf-8'),
+        content_type='application/octet-stream',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{config_filename}"'
+    return response
+
+
+@login_required
+def get_openvpn_config_qr(request, account_number: str) -> HttpResponse:
+    """
+    Return an SVG QR code that encodes the mobile import URL for this account.
+
+    The .ovpn itself is too large to embed in a QR code (~5KB with certificates),
+    so the code points at the dashboard download URL instead.
+    """
+    import io
+    from django.urls import reverse
+    import segno
+
+    if not os.path.exists(_client_config_path(account_number)):
+        return _config_not_found_response(request, account_number)
+
+    profile_url = request.build_absolute_uri(
+        reverse('download_file', args=[account_number])
+    )
+    if not profile_url.endswith('/'):
+        profile_url += '/'
+    profile_url += '?import=1'
+
+    qr = segno.make(profile_url, error='m')
+    buffer = io.BytesIO()
+    qr.save(buffer, kind='svg', scale=8, border=2, dark='#0f172a', light='#ffffff')
+    return HttpResponse(buffer.getvalue(), content_type='image/svg+xml')
 
 
 def list_openvpn_clients() -> List:

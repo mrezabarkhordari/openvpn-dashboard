@@ -1,10 +1,18 @@
 # OpenVPN Dashboard - Docker Image
-# 
+#
 # This container runs the OpenVPN management UI and usage collector.
 # It needs access to OpenVPN directories on the host system.
 #
 # Build: docker build -f docker/Dockerfile -t openvpn-dashboard .
 # Run: docker-compose up -d
+
+FROM node:22-alpine AS css
+WORKDIR /build
+COPY package.json package-lock.json* ./
+COPY frontend ./frontend
+COPY openvpn_dashboard/templates ./openvpn_dashboard/templates
+COPY openvpn_dashboard/static/openvpn_dashboard/js ./openvpn_dashboard/static/openvpn_dashboard/js
+RUN npm install && npm run build:css
 
 FROM python:3.11-slim-bookworm
 
@@ -63,6 +71,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY --chown=${APP_USER}:${APP_GROUP} . .
+COPY --from=css --chown=${APP_USER}:${APP_GROUP} /build/openvpn_dashboard/static/openvpn_dashboard/css/app.css \
+    ${APP_HOME}/openvpn_dashboard/static/openvpn_dashboard/css/app.css
 
 # Copy and set up entrypoint script
 COPY --chown=${APP_USER}:${APP_GROUP} docker-entrypoint.sh /usr/local/bin/
